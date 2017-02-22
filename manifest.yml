@@ -6,6 +6,6 @@ applications:
   name: nyu-lab-bluemix-jr
   host: nyu-lab-bluemix-jr
   disk_quota: 1024M
+  buildpack: python_buildpack
   services:
   - RedisCloud
-  buildpack: python_buildpack
