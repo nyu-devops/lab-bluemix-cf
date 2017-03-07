@@ -80,6 +80,8 @@ class TestPetServer(unittest.TestCase):
         data = json.dumps(new_kitty)
         resp = self.app.put('/pets/2', data=data, content_type='application/json')
         self.assertEqual( resp.status_code, HTTP_200_OK )
+        resp = self.app.get('/pets/2', content_type='application/json')
+        self.assertEqual( resp.status_code, HTTP_200_OK )
         new_json = json.loads(resp.data)
         self.assertEqual (new_json['category'], 'tabby')
 

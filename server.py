@@ -107,6 +107,7 @@ def update_pets(id):
         payload = request.get_json()
         if Pet.validate(payload):
             pet = Pet.from_dict(payload)
+            pet.id = id
             pet.save(redis)
             message = pet.serialize()
             rc = HTTP_200_OK
