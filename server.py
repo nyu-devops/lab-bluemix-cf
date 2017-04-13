@@ -17,7 +17,7 @@ import logging
 from redis import Redis
 from redis.exceptions import ConnectionError
 from flask import Flask, Response, jsonify, request, json, url_for, make_response
-from pets import Pet
+from models import Pet
 
 # Create Flask application
 app = Flask(__name__)
@@ -34,6 +34,23 @@ HTTP_204_NO_CONTENT = 204
 HTTP_400_BAD_REQUEST = 400
 HTTP_404_NOT_FOUND = 404
 HTTP_409_CONFLICT = 409
+
+######################################################################
+# ERROR Handling
+######################################################################
+
+@app.errorhandler(ValueError)
+def request_validation_error(e):
+    return bad_request(e)
+
+@app.errorhandler(404)
+def not_found(e):
+    return make_response(jsonify(status=404, error='Not Found', message=e.description), HTTP_404_NOT_FOUND)
+
+@app.errorhandler(400)
+def bad_request(e):
+    return make_response(jsonify(status=400, error='Bad Request', message=e.message), HTTP_400_BAD_REQUEST)
+
 
 ######################################################################
 # GET INDEX
@@ -53,19 +70,20 @@ def list_pets():
     pets = []
     category = request.args.get('category')
     if category:
-        pets = Pet.find_by_category(redis, category)
+        pets = Pet.find_by_category(category)
     else:
-        pets = Pet.all(redis)
+        pets = Pet.all()
 
-    results = [Pet.serialize(pet) for pet in pets]
+    results = [pet.serialize() for pet in pets]
     return make_response(jsonify(results), HTTP_200_OK)
+
 
 ######################################################################
 # RETRIEVE A PET
 ######################################################################
 @app.route('/pets/<int:id>', methods=['GET'])
 def get_pets(id):
-    pet = Pet.find(redis, id)
+    pet = Pet.find(id)
     if pet:
         message = pet.serialize()
         rc = HTTP_200_OK
@@ -80,40 +98,33 @@ def get_pets(id):
 ######################################################################
 @app.route('/pets', methods=['POST'])
 def create_pets():
-    id = 0
-    payload = request.get_json()
-    if Pet.validate(payload):
-        pet = Pet(id, payload['name'], payload['category'])
-        pet.save(redis)
-        id = pet.id
-        message = pet.serialize()
-        rc = HTTP_201_CREATED
+    data = {}
+    # Check for form submission data
+    if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+        data = {
+                'name': request.form['name'],
+                'category': request.form['category'],
+                'available': request.form['available'].lower() in ['true', '1', 't']
+                }
     else:
-        message = { 'error' : 'Data is not valid' }
-        rc = HTTP_400_BAD_REQUEST
-
-    response = make_response(jsonify(message), rc)
-    if rc == HTTP_201_CREATED:
-        response.headers['Location'] = url_for('get_pets', id=id)
-    return response
+        data = request.get_json()
+    pet = Pet()
+    pet.deserialize(data)
+    pet.save()
+    message = pet.serialize()
+    return make_response(jsonify(message), HTTP_201_CREATED, {'Location': pet.self_url() })
 
 ######################################################################
 # UPDATE AN EXISTING PET
 ######################################################################
 @app.route('/pets/<int:id>', methods=['PUT'])
 def update_pets(id):
-    pet = Pet.find(redis, id)
+    pet = Pet.find(id)
     if pet:
-        payload = request.get_json()
-        if Pet.validate(payload):
-            pet = Pet.from_dict(payload)
-            pet.id = id
-            pet.save(redis)
-            message = pet.serialize()
-            rc = HTTP_200_OK
-        else:
-            message = { 'error' : 'Pet data was not valid' }
-            rc = HTTP_400_BAD_REQUEST
+        pet.deserialize(request.get_json())
+        pet.save()
+        message = pet.serialize()
+        rc = HTTP_200_OK
     else:
         message = { 'error' : 'Pet %s was not found' % id }
         rc = HTTP_404_NOT_FOUND
@@ -125,10 +136,28 @@ def update_pets(id):
 ######################################################################
 @app.route('/pets/<int:id>', methods=['DELETE'])
 def delete_pets(id):
-    pet = Pet.find(redis, id)
+    pet = Pet.find(id)
     if pet:
-        pet.delete(redis)
+        pet.delete()
     return make_response('', HTTP_204_NO_CONTENT)
+
+######################################################################
+# PURCHASE A PET
+######################################################################
+@app.route('/pets/<int:id>/purchase', methods=['PUT'])
+def purchase_pets(id):
+    pet = Pet.find(id)
+    if pet:
+        pet.available = False
+        pet.save()
+        message = pet.serialize()
+        rc = HTTP_200_OK
+    else:
+        message = { 'error' : 'Pet %s was not found' % id }
+        rc = HTTP_404_NOT_FOUND
+
+    return make_response(jsonify(message), rc)
+
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
@@ -136,22 +165,22 @@ def delete_pets(id):
 # load sample data
 def data_load(payload):
     pet = Pet(0, payload['name'], payload['category'])
-    pet.save(redis)
+    pet.save()
 
 def data_reset():
     redis.flushall()
 
-@app.before_first_request
-def setup_logging():
-    if not app.debug:
-        # In production mode, add log handler to sys.stderr.
-        handler = logging.StreamHandler()
-        handler.setLevel(app.config['LOGGING_LEVEL'])
-        # formatter = logging.Formatter(app.config['LOGGING_FORMAT'])
-        #'%Y-%m-%d %H:%M:%S'
-        formatter = logging.Formatter('[%(asctime)s] - %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
-        handler.setFormatter(formatter)
-        app.logger.addHandler(handler)
+# @app.before_first_request
+# def setup_logging():
+#     if not app.debug:
+#         # In production mode, add log handler to sys.stderr.
+#         handler = logging.StreamHandler()
+#         handler.setLevel(app.config['LOGGING_LEVEL'])
+#         # formatter = logging.Formatter(app.config['LOGGING_FORMAT'])
+#         #'%Y-%m-%d %H:%M:%S'
+#         formatter = logging.Formatter('[%(asctime)s] - %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]')
+#         handler.setFormatter(formatter)
+#         app.logger.addHandler(handler)
 
 ######################################################################
 # Connect to Redis and catch connection exceptions
@@ -193,6 +222,7 @@ def inititalize_redis():
         # if you end up here, redis instance is down.
         app.logger.error('*** FATAL ERROR: Could not connect to the Redis Service')
         exit(1)
+    Pet.use_db(redis)
 
 
 ######################################################################
