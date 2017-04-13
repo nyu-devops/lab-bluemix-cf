@@ -120,9 +120,6 @@ class TestPets(unittest.TestCase):
         pet = Pet.find(1)
         self.assertIs( pet, None)
 
-    def test_find_or_404(self):
-        self.assertRaises(NotFound, Pet.find_or_404, 1)
-
     def test_pet_not_found(self):
         Pet(0, "fido", "dog").save()
         pet = Pet.find(2)
