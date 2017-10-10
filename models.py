@@ -13,104 +13,185 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ######################################################################
+"""
+Pet Model that uses Redis
 
+You must initlaize this class before use by calling inititlize().
+This class looks for an environment variable called VCAP_SERVICES
+to get it's database credentials from. If it cannot find one, it
+tries to connect to Redis on the localhost. If that fails it looks
+for a server name 'redis' to connect to.
+"""
+
+import os
+import json
+import logging
 import pickle
-from flask import url_for
+from redis import Redis
+from redis.exceptions import ConnectionError
 
-######################################################################
-# Pet Model for database
-#   This class must be initialized with use_db(redis) before using
-#   where redis is a value connection to a Redis database
-######################################################################
+class DataValidationError(Exception):
+    """ Custom Exception with data validation fails """
+    pass
+
 class Pet(object):
-    __redis = None
+    """ Pet interface to database """
+
+    logger = logging.getLogger(__name__)
+    redis = None
 
     def __init__(self, id=0, name=None, category=None, available=True):
+        """ Constructor that lazily connects to database """
         self.id = int(id)
         self.name = name
         self.category = category
         self.available = available
 
-    def self_url(self):
-        return url_for('get_pets', id=self.id, _external=True)
-
     def save(self):
-        if self.name == None:   # name is the only required field
-            raise AttributeError('name attribute is not set')
+        """ Saves a Pet in the database """
+        if self.name is None:   # name is the only required field
+            raise DataValidationError('name attribute is not set')
         if self.id == 0:
-            self.id = self.__next_index()
-        Pet.__redis.set(self.id, pickle.dumps(self.serialize()))
+            self.id = Pet.__next_index()
+        Pet.redis.set(self.id, pickle.dumps(self.serialize()))
 
     def delete(self):
-        Pet.__redis.delete(self.id)
-
-    def __next_index(self):
-        return Pet.__redis.incr('index')
+        """ Deletes a Pet from the database """
+        Pet.redis.delete(self.id)
 
     def serialize(self):
-        return { "id": self.id, "name": self.name, "category": self.category, "available": self.available }
+        """ serializes a Pet into a dictionary """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "category": self.category,
+            "available": self.available
+        }
 
     def deserialize(self, data):
+        """ deserializes a Pet my marshalling the data """
         try:
             self.name = data['name']
             self.category = data['category']
             self.available = data['available']
-        except KeyError as e:
-            raise ValueError('Invalid pet: missing ' + e.args[0])
-        except TypeError as e:
-            raise ValueError('Invalid pet: body of request contained bad or no data')
+        except KeyError as error:
+            raise DataValidationError('Invalid pet: missing ' + error.args[0])
+        except TypeError as error:
+            raise DataValidationError('Invalid pet: body of request contained bad or no data')
         return self
+
 
 ######################################################################
 #  S T A T I C   D A T A B S E   M E T H O D S
 ######################################################################
 
     @staticmethod
-    def use_db(redis):
-        Pet.__redis = redis
+    def __next_index():
+        """ Increments the index and returns it """
+        return Pet.redis.incr('index')
 
     @staticmethod
     def remove_all():
-        Pet.__redis.flushall()
+        """ Removes all Pets from the database """
+        Pet.redis.flushall()
 
     @staticmethod
     def all():
+        """ Query that returns all Pets """
         # results = [Pet.from_dict(redis.hgetall(key)) for key in redis.keys() if key != 'index']
         results = []
-        for key in Pet.__redis.keys():
+        for key in Pet.redis.keys():
             if key != 'index':  # filer out our id index
-                data = pickle.loads(Pet.__redis.get(key))
+                data = pickle.loads(Pet.redis.get(key))
                 pet = Pet(data['id']).deserialize(data)
                 results.append(pet)
         return results
 
+######################################################################
+#  F I N D E R   M E T H O D S
+######################################################################
+
     @staticmethod
-    def find(id):
-        if Pet.__redis.exists(id):
-            data = pickle.loads(Pet.__redis.get(id))
+    def find(pet_id):
+        """ Query that finds Pets by their id """
+        if Pet.redis.exists(pet_id):
+            data = pickle.loads(Pet.redis.get(pet_id))
             pet = Pet(data['id']).deserialize(data)
             return pet
-        else:
-            return None
+        return None
+
+    @staticmethod
+    def __find_by(attribute, value):
+        """ Generic Query that finds a key with a specific value """
+        # return [pet for pet in Pet.__data if pet.category == category]
+        results = []
+        for key in Pet.redis.keys():
+            if key != 'index':  # filer out our id index
+                data = pickle.loads(Pet.redis.get(key))
+                if data[attribute] == value:
+                    results.append(Pet(data['id']).deserialize(data))
+        return results
+
+    @staticmethod
+    def find_by_name(name):
+        """ Query that finds Pets by their name """
+        return Pet.__find_by('name', name)
 
     @staticmethod
     def find_by_category(category):
-        # return [pet for pet in Pet.__data if pet.category == category]
-        results = []
-        for key in Pet.__redis.keys():
-            if key != 'index':  # filer out our id index
-                data = pickle.loads(Pet.__redis.get(key))
-                if data['category'] == category:
-                    results.append(Pet(data['id']).deserialize(data))
-        return results
+        """ Query that finds Pets by their category """
+        return Pet.__find_by('category', category)
 
     @staticmethod
     def find_by_availability(available=True):
-        # return [pet for pet in Pet.__data if pet.available == available]
-        results = []
-        for key in Pet.__redis.keys():
-            if key != 'index':  # filer out our id index
-                data = pickle.loads(Pet.__redis.get(key))
-                if data['available'] == available:
-                    results.append(Pet(data['id']).deserialize(data))
-        return results
+        """ Query that finds Pets by their availability """
+        return Pet.__find_by('available', available)
+
+######################################################################
+#  R E D I S   D A T A B A S E   C O N N E C T I O N   M E T H O D S
+######################################################################
+
+    @staticmethod
+    def connect_to_redis(hostname, port, password):
+        """ Connects to Redis and tests the connection """
+        Pet.redis = Redis(host=hostname, port=port, password=password)
+        try:
+            Pet.redis.ping()
+        except ConnectionError:
+            Pet.redis = None
+        return Pet.redis
+
+    @staticmethod
+    def init_db(redis=None):
+        """
+        Initialized Redis database connection
+
+        This method will work in the following conditions:
+          1) In Bluemix with Redis bound through VCAP_SERVICES
+          2) With Redis running on the local server as with Travis CI
+          3) With Redis --link in a Docker container called 'redis'
+          4) Passing in your own Redis connection object
+        """
+        if redis:
+            Pet.logger.info("Using passed in connection...")
+            Pet.redis = redis
+            return
+        # Get the credentials from the Bluemix environment
+        if 'VCAP_SERVICES' in os.environ:
+            Pet.logger.info("Using VCAP_SERVICES...")
+            vcap_services = os.environ['VCAP_SERVICES']
+            services = json.loads(vcap_services)
+            creds = services['rediscloud'][0]['credentials']
+            Pet.logger.info("Conecting to Redis on host %s port %s",
+                            creds['hostname'], creds['port'])
+            Pet.connect_to_redis(creds['hostname'], creds['port'], creds['password'])
+        else:
+            Pet.logger.info("VCAP_SERVICES not found, checking localhost for Redis")
+            Pet.connect_to_redis('127.0.0.1', 6379, None)
+            if not Pet.redis:
+                Pet.logger.info("No Redis on localhost, looking for redis host")
+                Pet.connect_to_redis('redis', 6379, None)
+        if not Pet.redis:
+            # if you end up here, redis instance is down.
+            Pet.logger.fatal('*** FATAL ERROR: Could not connect to the Redis Service')
+            exit(1)

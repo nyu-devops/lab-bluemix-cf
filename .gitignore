@@ -1,13 +1,9 @@
 # Local environment
-.env
 .DS_Store
 Thumbs.db
 
-# Virtual Environment files
-venv/
-
 # Vagrant
-.vagrant
+.vagrant/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
