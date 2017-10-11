@@ -41,7 +41,7 @@ class Pet(object):
     redis = None
 
     def __init__(self, id=0, name=None, category=None, available=True):
-        """ Constructor that lazily connects to database """
+        """ Constructor """
         self.id = int(id)
         self.name = name
         self.category = category
@@ -124,11 +124,21 @@ class Pet(object):
     def __find_by(attribute, value):
         """ Generic Query that finds a key with a specific value """
         # return [pet for pet in Pet.__data if pet.category == category]
+        Pet.logger.info('Processing %s query for %s', attribute, value)
+        if isinstance(value, str):
+            search_criteria = value.lower() # make case insensitive
+        else:
+            search_criteria = value
         results = []
         for key in Pet.redis.keys():
             if key != 'index':  # filer out our id index
                 data = pickle.loads(Pet.redis.get(key))
-                if data[attribute] == value:
+                # perform case insensitive search on strings
+                if isinstance(data[attribute], str):
+                    test_value = data[attribute].lower()
+                else:
+                    test_value = data[attribute]
+                if test_value == search_criteria:
                     results.append(Pet(data['id']).deserialize(data))
         return results
 
@@ -154,10 +164,13 @@ class Pet(object):
     @staticmethod
     def connect_to_redis(hostname, port, password):
         """ Connects to Redis and tests the connection """
+        Pet.logger.info("Testing Connection to: %s:%s", hostname, port)
         Pet.redis = Redis(host=hostname, port=port, password=password)
         try:
             Pet.redis.ping()
+            Pet.logger.info("Connection established")
         except ConnectionError:
+            Pet.logger.info("Connection Error from: %s:%s", hostname, port)
             Pet.redis = None
         return Pet.redis
 
@@ -171,10 +184,21 @@ class Pet(object):
           2) With Redis running on the local server as with Travis CI
           3) With Redis --link in a Docker container called 'redis'
           4) Passing in your own Redis connection object
+
+        Exception:
+        ----------
+          redis.ConnectionError - if ping() test fails
         """
         if redis:
-            Pet.logger.info("Using passed in connection...")
+            Pet.logger.info("Using client connection...")
             Pet.redis = redis
+            try:
+                Pet.redis.ping()
+                Pet.logger.info("Connection established")
+            except ConnectionError:
+                Pet.logger.error("Client Connection Error!")
+                Pet.redis = None
+                raise ConnectionError('Could not connect to the Redis Service')
             return
         # Get the credentials from the Bluemix environment
         if 'VCAP_SERVICES' in os.environ:
@@ -194,4 +218,4 @@ class Pet(object):
         if not Pet.redis:
             # if you end up here, redis instance is down.
             Pet.logger.fatal('*** FATAL ERROR: Could not connect to the Redis Service')
-            exit(1)
+            raise ConnectionError('Could not connect to the Redis Service')

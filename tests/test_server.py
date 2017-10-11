@@ -71,6 +71,8 @@ class TestPetServer(unittest.TestCase):
         """ Get a Pet that doesn't exist """
         resp = self.app.get('/pets/0')
         self.assertEqual(resp.status_code, HTTP_404_NOT_FOUND)
+        data = json.loads(resp.data)
+        self.assertIn('was not found', data['message'])
 
     def test_create_pet(self):
         """ Create a new Pet """

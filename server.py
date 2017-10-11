@@ -31,7 +31,6 @@ import os
 import sys
 import logging
 from flask import Flask, jsonify, request, url_for, make_response, abort
-from werkzeug.exceptions import NotFound
 from models import Pet, DataValidationError
 
 # Create Flask application
@@ -136,7 +135,7 @@ def get_pets(pet_id):
     """
     pet = Pet.find(pet_id)
     if not pet:
-        raise NotFound("Pet with id '{}' was not found.".format(pet_id))
+        abort(HTTP_404_NOT_FOUND, "Pet with id '{}' was not found.".format(pet_id))
     return make_response(jsonify(pet.serialize()), HTTP_200_OK)
 
 ######################################################################
@@ -153,12 +152,14 @@ def create_pets():
     data = {}
     # Check for form submission data
     if request.headers.get('Content-Type') == 'application/x-www-form-urlencoded':
+        app.logger.info('Processing FORM data')
         data = {
             'name': request.form['name'],
             'category': request.form['category'],
             'available': request.form['available'].lower() in ['true', '1', 't']
         }
     else:
+        app.logger.info('Processing JSON data')
         data = request.get_json()
     pet = Pet()
     pet.deserialize(data)
@@ -179,7 +180,7 @@ def update_pets(pet_id):
     """
     pet = Pet.find(pet_id)
     if not pet:
-        raise NotFound("Pet with id '{}' was not found.".format(pet_id))
+        abort(HTTP_404_NOT_FOUND, "Pet with id '{}' was not found.".format(pet_id))
     pet.deserialize(request.get_json())
     pet.id = pet_id
     pet.save()
@@ -209,7 +210,7 @@ def purchase_pets(pet_id):
     """ Purchase a Pet """
     pet = Pet.find(pet_id)
     if not pet:
-        raise NotFound("Pet with id '{}' was not found.".format(pet_id))
+        abort(HTTP_404_NOT_FOUND, "Pet with id '{}' was not found.".format(pet_id))
     if not pet.available:
         abort(HTTP_400_BAD_REQUEST, "Pet with id '{}' is not available.".format(pet_id))
     pet.available = False
@@ -220,6 +221,8 @@ def purchase_pets(pet_id):
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
+
+@app.before_first_request
 def init_db(redis=None):
     """ Initlaize the model """
     Pet.init_db(redis)

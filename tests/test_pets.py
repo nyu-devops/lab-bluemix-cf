@@ -19,9 +19,23 @@ Test cases can be run with the following:
 nosetests -v --with-spec --spec-color
 """
 
+import os
+import json
 import unittest
-#from redis import Redis
+from mock import patch
+from redis import Redis, ConnectionError
 from models import Pet, DataValidationError
+
+VCAP_SERVICES = {
+    'rediscloud': [
+        {'credentials': {
+            'password': '',
+            'hostname': '127.0.0.1',
+            'port': '6379'
+            }
+        }
+    ]
+}
 
 ######################################################################
 #  T E S T   C A S E S
@@ -151,6 +165,15 @@ class TestPets(unittest.TestCase):
         pet = Pet.find(2)
         self.assertIs(pet, None)
 
+    def test_find_by_name(self):
+        """ Find a Pet by Name """
+        Pet(0, "fido", "dog").save()
+        Pet(0, "kitty", "cat").save()
+        pets = Pet.find_by_name("fido")
+        self.assertNotEqual(len(pets), 0)
+        self.assertEqual(pets[0].category, "dog")
+        self.assertEqual(pets[0].name, "fido")
+
     def test_find_by_category(self):
         """ Find a Pet by Category """
         Pet(0, "fido", "dog").save()
@@ -167,6 +190,40 @@ class TestPets(unittest.TestCase):
         pets = Pet.find_by_availability(True)
         self.assertEqual(len(pets), 1)
         self.assertEqual(pets[0].name, "kitty")
+
+    def test_for_case_insensitive(self):
+        """ Test for Case Insensitive Search """
+        Pet(0, "Fido", "DOG").save()
+        Pet(0, "Kitty", "CAT").save()
+        pets = Pet.find_by_name("fido")
+        self.assertNotEqual(len(pets), 0)
+        self.assertEqual(pets[0].name, "Fido")
+        pets = Pet.find_by_category("cat")
+        self.assertNotEqual(len(pets), 0)
+        self.assertEqual(pets[0].category, "CAT")
+
+    def test_passing_connection(self):
+        """ Pass in the Redis connection """
+        Pet.init_db(Redis(host='127.0.0.1', port=6379))
+        self.assertIsNotNone(Pet.redis)
+
+    def test_passing_bad_connection(self):
+        """ Pass in a bad Redis connection """
+        self.assertRaises(ConnectionError, Pet.init_db, Redis(host='127.0.0.1', port=6300))
+        self.assertIsNone(Pet.redis)
+
+    @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
+    def test_vcap_services(self):
+        """ Test if VCAP_SERVICES works """
+        Pet.init_db()
+        self.assertIsNotNone(Pet.redis)
+
+    @patch('redis.Redis.ping')
+    def test_redis_connection_error(self, ping_error_mock):
+        """ Test a Bad Redis connection """
+        ping_error_mock.side_effect = ConnectionError()
+        self.assertRaises(ConnectionError, Pet.init_db)
+        self.assertIsNone(Pet.redis)
 
 
 ######################################################################
