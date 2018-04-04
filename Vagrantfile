@@ -30,16 +30,23 @@ Vagrant.configure(2) do |config|
   # Setup a Python development environment
   ######################################################################
   config.vm.provision "shell", inline: <<-SHELL
-    wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-    echo "deb http://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
     apt-get update
-    #apt-get upgrade -y
-    #apt-get dist-upgrade -y
-    apt-get install -y git zip tree python-pip python-dev cf-cli
+    apt-get install -y git zip tree python-pip python-dev
     apt-get -y autoremove
     pip install --upgrade pip
+
+    echo "\n******************************"
+    echo " Installing Bluemix CLI"
+    echo "******************************\n"
+    wget -q -O - https://clis.ng.bluemix.net/download/bluemix-cli/latest/linux64 | tar xzv
+    cd Bluemix_CLI/
+    ./install_bluemix_cli
+    cd ..
+    rm -fr Bluemix_CLI/
+    bluemix config --usage-stats-collect false
+
     # Make vi look nice
-    sudo -H -u ubuntu echo "colorscheme desert" > ~/.vimrc
+    sudo -H -u vagrant echo "colorscheme desert" > ~/.vimrc
     # Install app dependencies
     echo "\n******************************"
     echo " Installing App Dependencies"
