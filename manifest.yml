@@ -3,7 +3,7 @@
 applications:
 - name: nyu-lab-bluemix-ad
   memory: 64M
-  instances: 1
+  instances: 2
   #random-route: true
   host: nyu-lab-bluemix-ad
   domain: mybluemix.net
@@ -11,4 +11,4 @@ applications:
   disk_quota: 512M
   buildpack: python_buildpack
   services:
-  - RedisCloud
+  - ElephantSQL
