@@ -126,7 +126,7 @@ def list_pets():
 ######################################################################
 # RETRIEVE A PET
 ######################################################################
-@app.route('/pets/<int:pet_id>', methods=['GET'])
+@app.route('/pets/<pet_id>', methods=['GET'])
 def get_pets(pet_id):
     """
     Retrieve a single Pet
@@ -171,7 +171,7 @@ def create_pets():
 ######################################################################
 # UPDATE AN EXISTING PET
 ######################################################################
-@app.route('/pets/<int:pet_id>', methods=['PUT'])
+@app.route('/pets/<pet_id>', methods=['PUT'])
 def update_pets(pet_id):
     """
     Update a Pet
@@ -190,7 +190,7 @@ def update_pets(pet_id):
 ######################################################################
 # DELETE A PET
 ######################################################################
-@app.route('/pets/<int:pet_id>', methods=['DELETE'])
+@app.route('/pets/<pet_id>', methods=['DELETE'])
 def delete_pets(pet_id):
     """
     Delete a Pet
@@ -205,7 +205,7 @@ def delete_pets(pet_id):
 ######################################################################
 # PURCHASE A PET
 ######################################################################
-@app.route('/pets/<int:pet_id>/purchase', methods=['PUT'])
+@app.route('/pets/<pet_id>/purchase', methods=['PUT'])
 def purchase_pets(pet_id):
     """ Purchase a Pet """
     pet = Pet.find(pet_id)
@@ -223,14 +223,14 @@ def purchase_pets(pet_id):
 ######################################################################
 
 @app.before_first_request
-def init_db(redis=None):
+def init_db(dbname="pets"):
     """ Initlaize the model """
-    Pet.init_db(redis)
+    Pet.init_db(dbname)
 
 # load sample data
 def data_load(payload):
     """ Loads a Pet into the database """
-    pet = Pet(0, payload['name'], payload['category'])
+    pet = Pet(payload['name'], payload['category'], payload['available'])
     pet.save()
 
 def data_reset():
