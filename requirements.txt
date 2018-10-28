@@ -1,5 +1,8 @@
 Flask==1.0.2
+Flask-API==1.0
+Flask-RESTful==0.3.6
 cloudant==2.9.0
+gunicorn
 pylint
 mock==2.0.0
 httpie==0.9.9
