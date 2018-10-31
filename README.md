@@ -1,7 +1,10 @@
 # Bluemix Python Web application
+
+[![Build Status](https://travis-ci.org/rofrano/lab-bluemix-cf.svg?branch=master)](https://travis-ci.org/rofrano/lab-bluemix-cf)
+
 This repository is part of lab for the *NYU DevOps* class for Fall 2018, [CSCI-GA.2820-​001 ](http://cs.nyu.edu/courses/spring17/CSCI-GA.3033-013/)
 
-The sample code is using [Flask microframework](http://flask.pocoo.org/) and is intented to test the Python support on [IBM Cloud](https://bluemix.net/) environment which is based on Cloud Foundry. It also uses [Cloudant](https://www.ibm.com/cloud/cloudant) as a database for storing JSON objects.
+The sample code is using [Flask microframework](http://flask.pocoo.org/) with [Flask-RESTful](https://flask-restful.readthedocs.io/en/0.3.6/quickstart.html) and is intented to test the Python support on [IBM Cloud](https://bluemix.net/) environment which is based on Cloud Foundry. It also uses [Cloudant](https://www.ibm.com/cloud/cloudant) as a database for storing JSON objects.
 
 IBM Cloud contains the Python buildpack from [Cloud Foundry](https://github.com/cloudfoundry/python-buildpack) and so will be auto-detected as long as a `requirements.txt` or a `setup.py` is located in the root of your application.
 
@@ -32,7 +35,7 @@ You can run the tests to make sure that the code works with the following comman
 You can run the code to test it out in your browser with the following command:
 
 ```bash
-    python server.py
+    honcho start
 ```
 
 You should be able to see it at: http://localhost:5000/
@@ -82,7 +85,7 @@ Once the application is deployed and started open a web browser and point to the
 
 **manifest.yml** - Controls how the app will be deployed in Bluemix and specifies memory and other services like Redis that are needed to be bound to it.
 
-**server.py** - the python application script. This is implemented as a simple [Flask](http://flask.pocoo.org/) application. The routes are defined in the application using the @app.route() calls. This application has a `/` route and a `/pets` route defined. The application deployed to Bluemix needs to listen to the port defined by the VCAP_APP_PORT environment variable as seen here:
+**service** - the python package that contains fthe applciation. This is implemented as a simple Flask-RESTful application. The routes are defined in the application using the `api.add_resource()` calls. This application has a `/` route and a `/pets` route defined. The application deployed to IBM Cloud needs to listen to the port defined by the VCAP_APP_PORT environment variable as seen here:
 ```python
 port = os.getenv('VCAP_APP_PORT', '5000')
 if __name__ == "__main__":

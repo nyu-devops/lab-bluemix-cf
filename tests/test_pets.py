@@ -23,7 +23,7 @@ import os
 import json
 import unittest
 from mock import patch
-from models import Pet, DataValidationError
+from service.models import Pet, DataValidationError
 
 VCAP_SERVICES = {
     'cloudantNoSQLDB': [

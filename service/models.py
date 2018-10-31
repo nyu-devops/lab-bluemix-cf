@@ -35,7 +35,7 @@ import json
 import logging
 from cloudant.client import Cloudant
 from cloudant.query import Query
-from requests import HTTPError
+from requests import HTTPError, ConnectionError
 
 class DataValidationError(Exception):
     """ Custom Exception with data validation fails """
@@ -115,7 +115,6 @@ class Pet(object):
     def deserialize(self, data):
         """ deserializes a Pet my marshalling the data """
         Pet.logger.info(data)
-        print data
         try:
             self.name = data['name']
             self.category = data['category']
@@ -254,12 +253,15 @@ class Pet(object):
             exit(-1)
 
         Pet.logger.info('Cloudant Endpoint: %s', opts['url'])
-        Pet.client = Cloudant(opts['username'],
-                              opts['password'],
-                              url=opts['url'],
-                              connect=True,
-                              auto_renew=True
-                             )
+        try:
+            Pet.client = Cloudant(opts['username'],
+                                  opts['password'],
+                                  url=opts['url'],
+                                  connect=True,
+                                  auto_renew=True
+                                 )
+        except ConnectionError:
+            raise AssertionError('Cloudant service could not be reached')
 
         # Create database if it doesn't exist
         try:
