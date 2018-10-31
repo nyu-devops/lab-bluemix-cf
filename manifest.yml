@@ -11,7 +11,7 @@ applications:
   path: .
   disk_quota: 1024M
   buildpack: python_buildpack
-  command: python server.py
+  command: gunicorn --bind=0.0.0.0:$PORT service:app
   services:
   - Cloudant
   env:
