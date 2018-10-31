@@ -22,7 +22,8 @@ nosetests -v --with-spec --spec-color
 import unittest
 import logging
 import json
-import server
+from service import app
+from service.models import Pet
 
 # Status Codes
 HTTP_200_OK = 200
@@ -41,13 +42,12 @@ class TestPetServer(unittest.TestCase):
 
     def setUp(self):
         """ Initialize the Cloudant database """
-        self.app = server.app.test_client()
-        server.initialize_logging(logging.INFO)
-        server.init_db("tests")
-        server.data_reset()
-        server.data_load({"name": "fido", "category": "dog", "available": True})
-        server.data_load({"name": "kitty", "category": "cat", "available": True})
-        server.data_load({"name": "harry", "category": "hippo", "available": False})
+        self.app = app.test_client()
+        Pet.init_db("tests")
+        Pet.remove_all()
+        Pet("fido", "dog", True).save()
+        Pet("kitty", "cat", True).save()
+        Pet("harry", "hippo", False).save()
 
     def test_index(self):
         """ Test the index page """

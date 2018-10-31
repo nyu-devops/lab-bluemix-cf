@@ -4,11 +4,16 @@ applications:
 - name: nyu-lab-bluemix
   memory: 64M
   instances: 2
+  timeout: 180
   #random-route: true
   host: nyu-lab-bluemix
   domain: mybluemix.net
   path: .
-  disk_quota: 512M
+  disk_quota: 1024M
   buildpack: python_buildpack
+  command: python server.py
   services:
-  - RedisCloud
+  - Cloudant
+  env:
+    FLASK_APP : server
+    FLASK_DEBUG : false

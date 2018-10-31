@@ -1,6 +1,6 @@
 Flask==1.0.2
 Flask-API==1.0
-Flask-RESTful==0.3.6
+flask-restful==0.3.6
 cloudant==2.9.0
 gunicorn
 pylint
