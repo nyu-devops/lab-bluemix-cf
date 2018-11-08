@@ -54,7 +54,9 @@ class TestPets(unittest.TestCase):
         # The free version of Cloudant will rate limit calls
         # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
         # so we need to pause for a bit to avoid this problem
-        time.sleep(0.5) # 1/2 second should be enough
+        # if we are running in the Bluemix Pipeline
+        if 'VCAP_SERVICES' in os.environ:
+            time.sleep(0.5) # 1/2 second should be enough
 
     def test_create_a_pet(self):
         """ Create a pet and assert that it exists """
@@ -209,15 +211,15 @@ class TestPets(unittest.TestCase):
     #     self.assertNotEqual(len(pets), 0)
     #     self.assertEqual(pets[0].category, "CAT")
 
-    @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
-    def test_vcap_services(self):
-        """ Test if VCAP_SERVICES works """
-        Pet.init_db()
-        self.assertIsNotNone(Pet.client)
-        Pet("fido", "dog", True).save()
-        pets = Pet.find_by_name("fido")
-        self.assertNotEqual(len(pets), 0)
-        self.assertEqual(pets[0].name, "fido")
+    # @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
+    # def test_vcap_services(self):
+    #     """ Test if VCAP_SERVICES works """
+    #     Pet.init_db()
+    #     self.assertIsNotNone(Pet.client)
+    #     Pet("fido", "dog", True).save()
+    #     pets = Pet.find_by_name("fido")
+    #     self.assertNotEqual(len(pets), 0)
+    #     self.assertEqual(pets[0].name, "fido")
 
 
 
