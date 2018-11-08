@@ -21,6 +21,7 @@ nosetests -v --with-spec --spec-color
 
 import os
 import json
+import time # use for rate limiting Cloudant Lite :(
 import unittest
 from mock import patch
 from service.models import Pet, DataValidationError
@@ -48,6 +49,12 @@ class TestPets(unittest.TestCase):
         """ Initialize the Cloudant database """
         Pet.init_db("test")
         Pet.remove_all()
+
+    def tearDown(self):
+        # The free version of Cloudant will rate limit calls
+        # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
+        # so we need to pause for a bit to avoid this problem
+        time.sleep(0.25) # 1/4 second should be enough
 
     def test_create_a_pet(self):
         """ Create a pet and assert that it exists """

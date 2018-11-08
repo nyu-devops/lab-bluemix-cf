@@ -22,6 +22,7 @@ nosetests -v --with-spec --spec-color
 import unittest
 import logging
 import json
+import time # use for rate limiting Cloudant Lite :(
 from service import app
 from service.models import Pet
 
@@ -48,6 +49,12 @@ class TestPetServer(unittest.TestCase):
         Pet("fido", "dog", True).save()
         Pet("kitty", "cat", True).save()
         Pet("harry", "hippo", False).save()
+
+    def tearDown(self):
+        # The free version of Cloudant will rate limit calls
+        # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
+        # so we need to pause for a bit to avoid this problem
+        time.sleep(0.25) # 1/4 second should be enough
 
     def test_index(self):
         """ Test the index page """
