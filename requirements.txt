@@ -2,7 +2,7 @@ Flask==1.0.2
 Flask-API==1.0
 flask-restful==0.3.6
 cloudant==2.9.0
-gunicorn
+gunicorn==19.9.0
 pylint==1.9.3
 mock==2.0.0
 httpie==0.9.9
