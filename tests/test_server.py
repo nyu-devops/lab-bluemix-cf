@@ -22,7 +22,7 @@ nosetests -v --with-spec --spec-color
 import unittest
 import logging
 import json
-import time # use for rate limiting Cloudant Lite :(
+from time import sleep # use for rate limiting Cloudant Lite :(
 from service import app
 from service.models import Pet
 
@@ -45,16 +45,22 @@ class TestPetServer(unittest.TestCase):
         """ Initialize the Cloudant database """
         self.app = app.test_client()
         Pet.init_db("tests")
+        # Cloudant Lite will rate limit so you must sleep between requests :()
+        sleep(0.5)
         Pet.remove_all()
+        sleep(0.5)
         Pet("fido", "dog", True).save()
+        sleep(0.5)
         Pet("kitty", "cat", True).save()
+        sleep(0.5)
         Pet("harry", "hippo", False).save()
+        sleep(0.5)
 
     def tearDown(self):
         # The free version of Cloudant will rate limit calls
         # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
         # so we need to pause for a bit to avoid this problem
-        time.sleep(0.25) # 1/4 second should be enough
+        sleep(0.25) # 1/4 second should be enough
 
     def test_index(self):
         """ Test the index page """
@@ -91,6 +97,9 @@ class TestPetServer(unittest.TestCase):
         new_pet = {'name': 'sammy', 'category': 'snake', 'available': True}
         data = json.dumps(new_pet)
         resp = self.app.post('/pets', data=data, content_type='application/json')
+        if resp.status_code == 429: # rate limit exceeded
+            sleep(1)                # wait for 1 second and try again
+            resp = self.app.post('/pets', data=data, content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_201_CREATED)
         # Make sure location header is set
         location = resp.headers.get('Location', None)
