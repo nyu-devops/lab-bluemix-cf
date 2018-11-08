@@ -54,7 +54,7 @@ class TestPets(unittest.TestCase):
         # The free version of Cloudant will rate limit calls
         # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
         # so we need to pause for a bit to avoid this problem
-        time.sleep(0.25) # 1/4 second should be enough
+        time.sleep(0.5) # 1/2 second should be enough
 
     def test_create_a_pet(self):
         """ Create a pet and assert that it exists """
