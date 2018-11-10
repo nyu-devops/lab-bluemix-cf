@@ -20,10 +20,13 @@ class PetCollection(Resource):
         name = request.args.get('name')
         available = request.args.get('available')
         if category:
+            app.logger.info('Filtering by category: %s', category)
             pets = Pet.find_by_category(category)
         elif name:
+            app.logger.info('Filtering by name:%s', name)
             pets = Pet.find_by_name(name)
         elif available:
+            app.logger.info('Filtering by available: %s', available)
             pets = Pet.find_by_availability(available)
         else:
             pets = Pet.all()
