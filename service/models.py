@@ -255,6 +255,7 @@ class Pet(object):
         Pet.logger.info('Cloudant Endpoint: %s', opts['url'])
         try:
             if 'TRAVIS_CI' in os.environ:
+                Pet.logger.info('Running in TravisCI... using admin parity')
                 Pet.client = Cloudant(None, None, url="http://127.0.0.1:5984/",
                                       admin_party=True, connect=True, auto_renew=True)
             else:
