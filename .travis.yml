@@ -9,6 +9,7 @@ env:
 install: "pip install -r requirements.txt"
 
 before_script:
+  - curl -X GET http://localhost:5984/
   - curl -X PUT localhost:5984/test
 
 # command to run tests
