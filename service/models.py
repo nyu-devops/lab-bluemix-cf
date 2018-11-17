@@ -254,12 +254,16 @@ class Pet(object):
 
         Pet.logger.info('Cloudant Endpoint: %s', opts['url'])
         try:
-            Pet.client = Cloudant(opts['username'],
-                                  opts['password'],
-                                  url=opts['url'],
-                                  connect=True,
-                                  auto_renew=True
-                                 )
+            if 'TRAVIS_CI' in os.environ:
+                Pet.client = Cloudant(None, None, url="http://127.0.0.1:5984/"
+                                      admin_party=True, connect=True, auto_renew=True)
+            else:
+                Pet.client = Cloudant(opts['username'],
+                                      opts['password'],
+                                      url=opts['url'],
+                                      connect=True,
+                                      auto_renew=True
+                                     )
         except ConnectionError:
             raise AssertionError('Cloudant service could not be reached')
 
