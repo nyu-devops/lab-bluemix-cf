@@ -1,9 +1,21 @@
+sudo: required
+
+services:
+  - docker
+  # - couchdb
+
 language: python
 python:
   - "2.7"
 
 env:
   - ADMIN_PARTY=true
+
+before_install:
+- docker pull couchdb:latest
+- docker run -d --name couchdb -p 127:0.0.1:5984:5984 couchdb:latest
+#- docker run -d --name couchdb -p 127:0.0.1:5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass couchdb:latest
+- docker ps -a
 
 # command to install dependencies
 install: "pip install -r requirements.txt"
@@ -17,6 +29,3 @@ script: nosetests
 
 after_success:
   - codecov
-
-services:
-  - couchdb
