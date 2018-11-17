@@ -18,9 +18,8 @@ Pet API Service Test Suite
 Test cases can be run with the following:
 nosetests -v --with-spec --spec-color
 """
-
+import os
 import unittest
-import logging
 import json
 from time import sleep # use for rate limiting Cloudant Lite :(
 from service import app
@@ -46,21 +45,27 @@ class TestPetServer(unittest.TestCase):
         self.app = app.test_client()
         Pet.init_db("tests")
         # Cloudant Lite will rate limit so you must sleep between requests :()
-        sleep(0.5)
+        TestPetServer.throttle_api()
         Pet.remove_all()
-        sleep(0.5)
+        TestPetServer.throttle_api()
         Pet("fido", "dog", True).save()
-        sleep(0.5)
+        TestPetServer.throttle_api()
         Pet("kitty", "cat", True).save()
-        sleep(0.5)
+        TestPetServer.throttle_api()
         Pet("harry", "hippo", False).save()
-        sleep(0.5)
+        TestPetServer.throttle_api()
 
     def tearDown(self):
         # The free version of Cloudant will rate limit calls
         # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
         # so we need to pause for a bit to avoid this problem
-        sleep(0.25) # 1/4 second should be enough
+        TestPetServer.throttle_api()
+
+    @staticmethod
+    def throttle_api(amount=0.25): # 1/4 second should be enough
+        """ Throttles the API calls by sleeping """
+        if 'VCAP_SERVICES' in os.environ:
+            sleep(amount)
 
     def test_index(self):
         """ Test the index page """
@@ -134,7 +139,7 @@ class TestPetServer(unittest.TestCase):
     def test_update_pet_with_no_name(self):
         """ Update a Pet without assigning a name """
         pet = self.get_pet('fido')[0] # returns a list
-        del(pet['name'])
+        del pet['name']
         data = json.dumps(pet)
         resp = self.app.put('/pets/{}'.format(pet['_id']), data=data,
                             content_type='application/json')

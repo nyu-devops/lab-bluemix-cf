@@ -28,6 +28,7 @@ To use with Docker couchdb database use:
 Docker Note:
     CouchDB uses /opt/couchdb/data to store its data, and is exposed as a volume
     e.g., to use current folder add: -v $(pwd):/opt/couchdb/data
+    You can also use Docker volumes like this: -v couchdb_data:/opt/couchdb/data
 """
 
 import os
@@ -36,6 +37,12 @@ import logging
 from cloudant.client import Cloudant
 from cloudant.query import Query
 from requests import HTTPError, ConnectionError
+
+# get configruation from enviuronment (12-factor)
+ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
+CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', '127.0.0.1')
+CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
+CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 
 class DataValidationError(Exception):
     """ Custom Exception with data validation fails """
@@ -179,7 +186,6 @@ class Pet(object):
             pet = Pet()
             pet.deserialize(doc)
             results.append(pet)
-        # return [doc for doc in query.result]
         return results
 
     @classmethod
@@ -229,11 +235,11 @@ class Pet(object):
         else:
             Pet.logger.info('VCAP_SERVICES and BINDING_CLOUDANT undefined.')
             creds = {
-                "username": "admin",
-                "password": "pass",
-                "host": '127.0.0.1',
+                "username": CLOUDANT_USERNAME,
+                "password": CLOUDANT_PASSWORD,
+                "host": CLOUDANT_HOST,
                 "port": 5984,
-                "url": "http://admin:pass@127.0.0.1:5984/"
+                "url": "http://"+CLOUDANT_HOST+":5984/"
             }
             vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
 
@@ -254,22 +260,15 @@ class Pet(object):
 
         Pet.logger.info('Cloudant Endpoint: %s', opts['url'])
         try:
-            if 'TRAVIS_CI' in os.environ:
-                Pet.logger.info('Running in TravisCI... using admin parity')
-                Pet.client = Cloudant(opts['username'],
-                                      opts['password'],
-                                      url=opts['url'],
-                                      connect=True,
-                                      auto_renew=True,
-                                      admin_party=True
-                                     )
-            else:
-                Pet.client = Cloudant(opts['username'],
-                                      opts['password'],
-                                      url=opts['url'],
-                                      connect=True,
-                                      auto_renew=True
-                                     )
+            if ADMIN_PARTY:
+                Pet.logger.info('Running in Admin Party Mode...')
+            Pet.client = Cloudant(opts['username'],
+                                  opts['password'],
+                                  url=opts['url'],
+                                  connect=True,
+                                  auto_renew=True,
+                                  admin_party=ADMIN_PARTY
+                                 )
         except ConnectionError:
             raise AssertionError('Cloudant service could not be reached')
 

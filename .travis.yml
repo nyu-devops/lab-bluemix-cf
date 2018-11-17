@@ -3,10 +3,13 @@ python:
   - "2.7"
 
 env:
-  - TRAVIS_CI=true
+  - ADMIN_PARTY=true
 
 # command to install dependencies
 install: "pip install -r requirements.txt"
+
+before_script:
+  - curl -X PUT localhost:5984/test
 
 # command to run tests
 script: nosetests

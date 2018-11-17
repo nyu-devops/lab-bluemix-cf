@@ -5,6 +5,10 @@ Thumbs.db
 # Vagrant
 .vagrant/
 
+# SonarQube Reports
+.scannerwork/
+.sonarlint/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
