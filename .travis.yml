@@ -29,5 +29,5 @@ script:
   - nosetests
 
 after_success:
-  - sonar-scanner
+  - sonar-scanner -X
   - codecov
