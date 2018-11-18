@@ -29,5 +29,6 @@ script:
   - nosetests
 
 after_success:
+  - cat $SONAR_SCANNER_HOME/conf/sonar-scanner.properties
   - sonar-scanner
   - codecov
