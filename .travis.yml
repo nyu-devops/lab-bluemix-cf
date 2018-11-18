@@ -1,27 +1,33 @@
 sudo: required
 
+addons:
+  sonarcloud:
+    organization: rofrano-github
+    token:
+      secure: xOsEyub0KDOeZ58mutk/vsQl2ojVldcWaE8nuLo5Pw6QRqPzFVMwREb7I0HYDc4z/M6U7ZwVfYo27inoB6fYuy+EMhJxJQR4fyi4YbmQqbjN9zIaANWxbFeT0b5I53V/YjwV1QXXrT9psv7GIZ3vAA2I30En2Tpk8jr5v9yCwuAl8k8RU07R3aZdl05Mavca+oEBbA3c7qZ6IQpwAu7llUi/ztUzNWFhhJfaDRP82eyxuzVwWjr5DVvDywyOLZYsHg7Zl50TBbQ26B+ST/toh1Du4PX6NxbwxYAwY54msMyR1hWKQSCLamzsuTC7WJp3PtueG+eI/wEaFJrkTtGaTjdJD7koG4LnCqTEXSIDTyIi5LWEcXTCvhbtHg3MXqgykVbbhqMsACYQOFvH2XrwCW+Wf74zQcEnl25sysAX39mlWK0u/O5/HHsWTMTGhLbJv0Rv1Hpfkjkr+u5wolv67l3Xuuc/vvu70rKX+xLicQUfRT0yEiAJJMJp3UQtMD/G5q4ZwvoBlgPVx1t8GsBJvmnLk6COmBBnrO4vXC5fIyGnnaHp+7bc9hIZUsj8KrGim4tsDN751mjiuHN5f0vQ/5NqRcqgb5cOvz/ilKmcYsks7ZZdotDgvwiRZ5OjJQeuT7K0W0/dKXTHCIiEPBA7N9PMMM29y5yopqMjUXaESJc=
+
 services:
   - docker
 
 language: python
 python:
-  - "2.7"
+  - '2.7'
 
-# Run our own couchdb because Travis CI version ia too old (1.6)
 before_install:
-- docker pull couchdb:latest
-- docker run -d --name couchdb -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass couchdb:latest
-- docker ps -a
+  - docker pull couchdb:latest
+  - docker run -d --name couchdb -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass
+    couchdb:latest
+  - docker ps -a
 
-# command to install dependencies
-install: "pip install -r requirements.txt"
+install: pip install -r requirements.txt
 
 before_script:
   - curl -X GET http://localhost:5984/
   - curl -X PUT http://admin:pass@localhost:5984/test
 
-# command to run tests
-script: nosetests
+script:
+  - nosetests
 
 after_success:
+  - sonar-scanner
   - codecov
