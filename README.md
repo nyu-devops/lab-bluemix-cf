@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/rofrano/lab-bluemix-cf.svg?branch=master)](https://travis-ci.org/rofrano/lab-bluemix-cf)
 ![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=rofrano_lab-bluemix-cf&metric=alert_status)
+![Coverage](https://sonarcloud.io/api/project_badges/measure?project=rofrano_lab-bluemix-cf&metric=coverage)
 
 This repository is part of lab for the *NYU DevOps* class for Fall 2018, [CSCI-GA.2820-​001 ](http://cs.nyu.edu/courses/spring17/CSCI-GA.3033-013/)
 

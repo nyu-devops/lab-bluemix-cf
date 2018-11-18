@@ -30,4 +30,3 @@ script:
 
 after_success:
   - sonar-scanner -X
-  - codecov
