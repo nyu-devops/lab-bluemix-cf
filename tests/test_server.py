@@ -114,7 +114,6 @@ class TestPetServer(unittest.TestCase):
         self.assertEqual(new_json['name'], 'sammy')
         # check that count has gone up and includes sammy
         resp = self.app.get('/pets')
-        # print 'resp_data(2): ' + resp.data
         data = json.loads(resp.data)
         self.assertEqual(resp.status_code, HTTP_200_OK)
         self.assertEqual(len(data), pet_count + 1)

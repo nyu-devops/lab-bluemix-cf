@@ -40,7 +40,7 @@ from requests import HTTPError, ConnectionError
 
 # get configruation from enviuronment (12-factor)
 ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
-CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', '127.0.0.1')
+CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
 CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
 CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 

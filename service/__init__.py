@@ -31,7 +31,7 @@ api.add_resource(PetResource, '/pets/<pet_id>')
 api.add_resource(PurchaseAction, '/pets/<pet_id>/purchase')
 
 # Set up logging for production
-print 'Setting up logging for {}...'.format(__name__)
+print('Setting up logging for {}...'.format(__name__))
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
     if gunicorn_logger:

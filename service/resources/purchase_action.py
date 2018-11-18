@@ -21,16 +21,3 @@ class PurchaseAction(Resource):
         pet.available = False
         pet.save()
         return pet.serialize(), status.HTTP_200_OK
-
-
-# @app.route('/pets/<pet_id>/purchase', methods=['PUT'])
-# def purchase_pets(pet_id):
-#     """ Purchase a Pet """
-#     pet = Pet.find(pet_id)
-#     if not pet:
-#         abort(status.HTTP_404_NOT_FOUND, "Pet with id '{}' was not found.".format(pet_id))
-#     if not pet.available:
-#         abort(status.HTTP_400_BAD_REQUEST, "Pet with id '{}' is not available.".format(pet_id))
-#     pet.available = False
-#     pet.save()
-#     return jsonify(pet.serialize()), status.HTTP_200_OK

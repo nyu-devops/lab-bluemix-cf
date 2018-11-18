@@ -31,9 +31,9 @@ VCAP_SERVICES = {
         {'credentials': {
             'username': 'admin',
             'password': 'pass',
-            'host': '127.0.0.1',
+            'host': 'localhost',
             'port': 5984,
-            'url': 'http://admin:pass@127.0.0.1:5984'
+            'url': 'http://admin:pass@localhost:5984'
             }
         }
     ]
@@ -200,27 +200,15 @@ class TestPets(unittest.TestCase):
         self.assertEqual(len(pets), 1)
         self.assertEqual(pets[0].name, "kitty")
 
-    # def test_for_case_insensitive(self):
-    #     """ Test for Case Insensitive Search """
-    #     Pet("Fido", "DOG").save()
-    #     Pet("Kitty", "CAT").save()
-    #     pets = Pet.find_by_name("fido")
-    #     self.assertNotEqual(len(pets), 0)
-    #     self.assertEqual(pets[0].name, "Fido")
-    #     pets = Pet.find_by_category("cat")
-    #     self.assertNotEqual(len(pets), 0)
-    #     self.assertEqual(pets[0].category, "CAT")
-
-    # @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
-    # def test_vcap_services(self):
-    #     """ Test if VCAP_SERVICES works """
-    #     Pet.init_db()
-    #     self.assertIsNotNone(Pet.client)
-    #     Pet("fido", "dog", True).save()
-    #     pets = Pet.find_by_name("fido")
-    #     self.assertNotEqual(len(pets), 0)
-    #     self.assertEqual(pets[0].name, "fido")
-
+    @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
+    def test_vcap_services(self):
+        """ Test if VCAP_SERVICES works """
+        Pet.init_db()
+        self.assertIsNotNone(Pet.client)
+        Pet("fido", "dog", True).save()
+        pets = Pet.find_by_name("fido")
+        self.assertNotEqual(len(pets), 0)
+        self.assertEqual(pets[0].name, "fido")
 
 
 ######################################################################
@@ -228,5 +216,5 @@ class TestPets(unittest.TestCase):
 ######################################################################
 if __name__ == '__main__':
     unittest.main()
-    # suite = unittest.TestLoader().loadTestsFromTestCase(TestPets)
-    # unittest.TextTestRunner(verbosity=2).run(suite)
+    suite = unittest.TestLoader().loadTestsFromTestCase(TestPets)
+    unittest.TextTestRunner(verbosity=2).run(suite)
