@@ -27,7 +27,8 @@ class PetCollection(Resource):
             pets = Pet.find_by_name(name)
         elif available:
             app.logger.info('Filtering by available: %s', available)
-            pets = Pet.find_by_availability(available)
+            is_available = available.lower() in ['yes', 'y', 'true', 't', '1']
+            pets = Pet.find_by_availability(is_available)
         else:
             pets = Pet.all()
 
@@ -51,10 +52,12 @@ class PetCollection(Resource):
         # Check for form submission data
         if content_type == 'application/x-www-form-urlencoded':
             app.logger.info('Processing FORM data')
+            app.logger.info(type(request.form))
+            app.logger.info(request.form)
             data = {
                 'name': request.form['name'],
                 'category': request.form['category'],
-                'available': request.form['available'].lower() in ['true', '1', 't']
+                'available': request.form['available'].lower() in ['yes', 'y', 'true', 't', '1']
             }
         elif content_type == 'application/json':
             app.logger.info('Processing JSON data')
