@@ -52,8 +52,8 @@ class Pet(object):
     """ Pet interface to database """
 
     logger = logging.getLogger(__name__)
-    client = None
-    database = None
+    client = None   # cloudant.client.Cloudant
+    database = None # cloudant.database.CloudantDatabase
 
     def __init__(self, name=None, category=None, available=True):
         """ Constructor """

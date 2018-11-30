@@ -19,11 +19,11 @@ Test cases can be run with the following:
 nosetests -v --with-spec --spec-color
 """
 
-import os
-import json
-import time # use for rate limiting Cloudant Lite :(
+# import os
+# import json
 import unittest
-from mock import patch
+from mock import MagicMock, patch
+from requests import HTTPError, ConnectionError
 from service.models import Pet, DataValidationError
 
 VCAP_SERVICES = {
@@ -49,14 +49,6 @@ class TestPets(unittest.TestCase):
         """ Initialize the Cloudant database """
         Pet.init_db("test")
         Pet.remove_all()
-
-    def tearDown(self):
-        # The free version of Cloudant will rate limit calls
-        # to 20 lookups/sec, 10 writes/sec, and 5 queries/sec
-        # so we need to pause for a bit to avoid this problem
-        # if we are running in the Bluemix Pipeline
-        if 'VCAP_SERVICES' in os.environ:
-            time.sleep(0.5) # 1/2 second should be enough
 
     def test_create_a_pet(self):
         """ Create a pet and assert that it exists """
@@ -152,6 +144,11 @@ class TestPets(unittest.TestCase):
         pet = Pet(None, "cat")
         self.assertRaises(DataValidationError, pet.save)
 
+    def test_create_a_pet_with_no_name(self):
+        """ Create a Pet with no name """
+        pet = Pet(None, "cat")
+        self.assertRaises(DataValidationError, pet.create)
+
     def test_find_pet(self):
         """ Find a Pet by id """
         Pet("fido", "dog").save()
@@ -200,15 +197,69 @@ class TestPets(unittest.TestCase):
         self.assertEqual(len(pets), 1)
         self.assertEqual(pets[0].name, "kitty")
 
-    @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
-    def test_vcap_services(self):
-        """ Test if VCAP_SERVICES works """
-        Pet.init_db()
-        self.assertIsNotNone(Pet.client)
-        Pet("fido", "dog", True).save()
-        pets = Pet.find_by_name("fido")
-        self.assertNotEqual(len(pets), 0)
-        self.assertEqual(pets[0].name, "fido")
+    def test_create_query_index(self):
+        """ Test create query index """
+        Pet("fido", "dog", False).save()
+        Pet("kitty", "cat", True).save()
+        Pet.create_query_index('category')
+
+    def test_disconnect(self):
+        """ Test Disconnet """
+        Pet.disconnect()
+        pet = Pet("fido", "dog", False)
+        self.assertRaises(AttributeError, pet.save)
+
+    @patch('cloudant.database.CloudantDatabase.create_document')
+    def test_http_error(self, bad_mock):
+        """ Test a Bad Create with HTTP error """
+        bad_mock.side_effect = HTTPError()
+        pet = Pet("fido", "dog", False)
+        pet.create()
+        self.assertIsNone(pet.id)
+
+    @patch('cloudant.document.Document.exists')
+    def test_document_not_exist(self, bad_mock):
+        """ Test a Bad Document Exists """
+        bad_mock.return_value = False
+        pet = Pet("fido", "dog", False)
+        pet.create()
+        self.assertIsNone(pet.id)
+
+    @patch('cloudant.database.CloudantDatabase.__getitem__')
+    def test_key_error_on_update(self, bad_mock):
+        """ Test KeyError on update """
+        bad_mock.side_effect = KeyError()
+        pet = Pet("fido", "dog", False)
+        pet.save()
+        pet.name = 'Fifi'
+        pet.update()
+        #self.assertEqual(pet.name, 'fido')
+
+    @patch('cloudant.database.CloudantDatabase.__getitem__')
+    def test_key_error_on_delete(self, bad_mock):
+        """ Test KeyError on delete """
+        bad_mock.side_effect = KeyError()
+        pet = Pet("fido", "dog", False)
+        pet.create()
+        pet.delete()
+
+    @patch('cloudant.client.Cloudant.__init__')
+    def test_connection_error(self, bad_mock):
+        """ Test Connection error handler """
+        bad_mock.side_effect = ConnectionError()
+        self.assertRaises(AssertionError, Pet.init_db, 'test')
+
+
+#     def test_http_error(self):
+    # @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
+    # def test_vcap_services(self):
+    #     """ Test if VCAP_SERVICES works """
+    #     Pet.init_db()
+    #     self.assertIsNotNone(Pet.client)
+    #     Pet("fido", "dog", True).save()
+    #     pets = Pet.find_by_name("fido")
+    #     self.assertNotEqual(len(pets), 0)
+    #     self.assertEqual(pets[0].name, "fido")
 
 
 ######################################################################
