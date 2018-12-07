@@ -34,6 +34,7 @@ Docker Note:
 import os
 import json
 import logging
+from retry import retry
 from cloudant.client import Cloudant
 from cloudant.query import Query
 from requests import HTTPError, ConnectionError
@@ -62,6 +63,7 @@ class Pet(object):
         self.category = category
         self.available = available
 
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def create(self):
         """
         Creates a new Pet in the database
@@ -78,6 +80,7 @@ class Pet(object):
         if document.exists():
             self.id = document['_id']
 
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def update(self):
         """
         Updates a Pet in the database
@@ -90,6 +93,7 @@ class Pet(object):
             document.update(self.serialize())
             document.save()
 
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def save(self):
         """ Saves a Pet in the database """
         if self.name is None:   # name is the only required field
@@ -99,6 +103,7 @@ class Pet(object):
         else:
             self.create()
 
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def delete(self):
         """ Deletes a Pet from the database """
         try:
@@ -153,17 +158,20 @@ class Pet(object):
         cls.client.disconnect()
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def create_query_index(cls, field_name, order='asc'):
         """ Creates a new query index for searching """
         cls.database.create_query_index(index_name=field_name, fields=[{field_name: order}])
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def remove_all(cls):
         """ Removes all documents from the database (use for testing)  """
         for document in cls.database:
             document.delete()
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def all(cls):
         """ Query that returns all Pets """
         results = []
@@ -178,6 +186,7 @@ class Pet(object):
 ######################################################################
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by(cls, **kwargs):
         """ Find records using selector """
         query = Query(cls.database, selector=kwargs)
@@ -189,6 +198,7 @@ class Pet(object):
         return results
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find(cls, pet_id):
         """ Query that finds Pets by their id """
         try:
@@ -198,16 +208,19 @@ class Pet(object):
             return None
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by_name(cls, name):
         """ Query that finds Pets by their name """
         return cls.find_by(name=name)
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by_category(cls, category):
         """ Query that finds Pets by their category """
         return cls.find_by(category=category)
 
     @classmethod
+    @retry(HTTPError, delay=1, backoff=2, tries=5)
     def find_by_availability(cls, available=True):
         """ Query that finds Pets by their availability """
         return cls.find_by(available=available)
