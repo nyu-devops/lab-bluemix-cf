@@ -5,6 +5,13 @@ Thumbs.db
 # Vagrant
 .vagrant/
 
+# Test reports
+unittests.xml
+
+# database files
+db/*
+!db/.keep
+
 # SonarQube Reports
 .scannerwork/
 .sonarlint/

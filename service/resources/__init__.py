@@ -1,5 +1,5 @@
 """
-This Package contains all opf the RESTful resources
+This Package contains all of the RESTful resources
 """
 from .pet_resource import PetResource
 from .pet_collection import PetCollection
