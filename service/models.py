@@ -45,10 +45,10 @@ CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
 CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
 CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 
-# global variables for retry
-RETRY_COUNT = os.environ.get('RETRY_COUNT', 10)
-RETRY_DELAY = os.environ.get('RETRY_DELAY', 1)
-RETRY_BACKOFF = os.environ.get('RETRY_BACKOFF', 2)
+# global variables for retry (must be int)
+RETRY_COUNT = int(os.environ.get('RETRY_COUNT', 10))
+RETRY_DELAY = int(os.environ.get('RETRY_DELAY', 1))
+RETRY_BACKOFF = int(os.environ.get('RETRY_BACKOFF', 2))
 
 class DataValidationError(Exception):
     """ Custom Exception with data validation fails """
