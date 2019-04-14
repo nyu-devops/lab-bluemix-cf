@@ -46,9 +46,9 @@ CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
 CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
 
 # global variables for retry
-RETRY_COUNT = 10
-RETRY_DELAY = 1
-RETRY_BACKOFF = 2
+RETRY_COUNT = os.environ.get('RETRY_COUNT', 10)
+RETRY_DELAY = os.environ.get('RETRY_DELAY', 1)
+RETRY_BACKOFF = os.environ.get('RETRY_BACKOFF', 2)
 
 class DataValidationError(Exception):
     """ Custom Exception with data validation fails """
@@ -68,7 +68,8 @@ class Pet(object):
         self.category = category
         self.available = available
 
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def create(self):
         """
         Creates a new Pet in the database
@@ -85,11 +86,11 @@ class Pet(object):
         if document.exists():
             self.id = document['_id']
 
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def update(self):
-        """
-        Updates a Pet in the database
-        """
+        """ Updates a Pet in the database """
         try:
             document = self.database[self.id]
         except KeyError:
@@ -98,7 +99,9 @@ class Pet(object):
             document.update(self.serialize())
             document.save()
 
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def save(self):
         """ Saves a Pet in the database """
         if self.name is None:   # name is the only required field
@@ -108,7 +111,9 @@ class Pet(object):
         else:
             self.create()
 
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def delete(self):
         """ Deletes a Pet from the database """
         try:
@@ -117,6 +122,7 @@ class Pet(object):
             document = None
         if document:
             document.delete()
+
 
     def serialize(self):
         """ serializes a Pet into a dictionary """
@@ -129,8 +135,13 @@ class Pet(object):
             pet['_id'] = self.id
         return pet
 
+
     def deserialize(self, data):
-        """ deserializes a Pet my marshalling the data """
+        """ deserializes a Pet my marshalling the data.
+
+        :param data: a Python dictionary representing a Pet.
+        """
+
         Pet.logger.info(data)
         try:
             self.name = data['name']
@@ -163,20 +174,23 @@ class Pet(object):
         cls.client.disconnect()
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def create_query_index(cls, field_name, order='asc'):
         """ Creates a new query index for searching """
         cls.database.create_query_index(index_name=field_name, fields=[{field_name: order}])
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def remove_all(cls):
         """ Removes all documents from the database (use for testing)  """
         for document in cls.database:
             document.delete()
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def all(cls):
         """ Query that returns all Pets """
         results = []
@@ -191,7 +205,8 @@ class Pet(object):
 ######################################################################
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by(cls, **kwargs):
         """ Find records using selector """
         query = Query(cls.database, selector=kwargs)
@@ -203,7 +218,8 @@ class Pet(object):
         return results
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find(cls, pet_id):
         """ Query that finds Pets by their id """
         try:
@@ -213,19 +229,22 @@ class Pet(object):
             return None
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_name(cls, name):
         """ Query that finds Pets by their name """
         return cls.find_by(name=name)
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_category(cls, category):
         """ Query that finds Pets by their category """
         return cls.find_by(category=category)
 
     @classmethod
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT)
+    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
+           logger=logger)
     def find_by_availability(cls, available=True):
         """ Query that finds Pets by their availability """
         return cls.find_by(available=available)
