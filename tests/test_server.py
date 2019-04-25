@@ -19,7 +19,6 @@ Test cases can be run with the following:
 nosetests -v --with-spec --spec-color
 """
 import unittest
-import json
 from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 from service import app
 from service.models import Pet
@@ -65,14 +64,14 @@ class TestPetServer(unittest.TestCase):
         pet = self.get_pet('kitty')[0] # returns a list
         resp = self.app.get('/pets/{}'.format(pet['_id']))
         self.assertEqual(resp.status_code, HTTP_200_OK)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         self.assertEqual(data['name'], 'kitty')
 
     def test_get_pet_not_found(self):
         """ Get a Pet that doesn't exist """
         resp = self.app.get('/pets/0')
         self.assertEqual(resp.status_code, HTTP_404_NOT_FOUND)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         self.assertIn('was not found', data['message'])
 
     def test_create_pet(self):
@@ -81,8 +80,7 @@ class TestPetServer(unittest.TestCase):
         pet_count = self.get_pet_count()
         # add a new pet
         new_pet = {'name': 'sammy', 'category': 'snake', 'available': True}
-        data = json.dumps(new_pet)
-        resp = self.app.post('/pets', data=data, content_type='application/json')
+        resp = self.app.post('/pets', json=new_pet, content_type='application/json')
         # if resp.status_code == 429: # rate limit exceeded
         #     sleep(1)                # wait for 1 second and try again
         #     resp = self.app.post('/pets', data=data, content_type='application/json')
@@ -91,11 +89,11 @@ class TestPetServer(unittest.TestCase):
         location = resp.headers.get('Location', None)
         self.assertNotEqual(location, None)
         # Check the data is correct
-        new_json = json.loads(resp.data)
+        new_json = resp.get_json()
         self.assertEqual(new_json['name'], 'sammy')
         # check that count has gone up and includes sammy
         resp = self.app.get('/pets')
-        data = json.loads(resp.data)
+        data = resp.get_json()
         self.assertEqual(resp.status_code, HTTP_200_OK)
         self.assertEqual(len(data), pet_count + 1)
         self.assertIn(new_json, data)
@@ -112,7 +110,7 @@ class TestPetServer(unittest.TestCase):
         location = resp.headers.get('Location', None)
         self.assertNotEqual(location, None)
         # Check the data is correct
-        new_json = json.loads(resp.data)
+        new_json = resp.get_json()
         self.assertEqual(new_json['name'], 'Timothy')
 
     def test_update_pet(self):
@@ -121,30 +119,27 @@ class TestPetServer(unittest.TestCase):
         self.assertEqual(pet['category'], 'cat')
         pet['category'] = 'tabby'
         # make the call
-        data = json.dumps(pet)
-        resp = self.app.put('/pets/{}'.format(pet['_id']), data=data,
+        resp = self.app.put('/pets/{}'.format(pet['_id']), json=pet,
                             content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_200_OK)
         # go back and get it again
         resp = self.app.get('/pets/{}'.format(pet['_id']), content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_200_OK)
-        new_json = json.loads(resp.data)
+        new_json = resp.get_json()
         self.assertEqual(new_json['category'], 'tabby')
 
     def test_update_pet_with_no_name(self):
         """ Update a Pet without assigning a name """
         pet = self.get_pet('fido')[0] # returns a list
         del pet['name']
-        data = json.dumps(pet)
-        resp = self.app.put('/pets/{}'.format(pet['_id']), data=data,
+        resp = self.app.put('/pets/{}'.format(pet['_id']), json=pet,
                             content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_400_BAD_REQUEST)
 
     def test_update_pet_not_found(self):
         """ Update a Pet that doesn't exist """
         new_kitty = {"name": "timothy", "category": "mouse"}
-        data = json.dumps(new_kitty)
-        resp = self.app.put('/pets/0', data=data, content_type='application/json')
+        resp = self.app.put('/pets/0', json=new_kitty, content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_404_NOT_FOUND)
 
     def test_delete_pet(self):
@@ -162,15 +157,12 @@ class TestPetServer(unittest.TestCase):
     def test_create_pet_with_no_name(self):
         """ Create a Pet without a name """
         new_pet = {'category': 'dog', 'available': True}
-        data = json.dumps(new_pet)
-        resp = self.app.post('/pets', data=data, content_type='application/json')
+        resp = self.app.post('/pets', json=new_pet, content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_400_BAD_REQUEST)
 
     def test_create_pet_no_content_type(self):
         """ Create a Pet with no Content-Type """
-        new_pet = {'name': 'sammy', 'category': 'snake', 'available': True}
-        data = json.dumps(new_pet)
-        resp = self.app.post('/pets', data=data)
+        resp = self.app.post('/pets', data="new_pet")
         self.assertEqual(resp.status_code, HTTP_400_BAD_REQUEST)
 
     def test_create_pet_wrong_content_type(self):
@@ -182,8 +174,7 @@ class TestPetServer(unittest.TestCase):
     def test_call_create_with_an_id(self):
         """ Call create passing an id """
         new_pet = {'name': 'sammy', 'category': 'snake', 'available': True}
-        data = json.dumps(new_pet)
-        resp = self.app.post('/pets/1', data=data)
+        resp = self.app.post('/pets/1', json=new_pet)
         self.assertEqual(resp.status_code, HTTP_405_METHOD_NOT_ALLOWED)
 
     def test_query_by_name(self):
@@ -193,7 +184,7 @@ class TestPetServer(unittest.TestCase):
         self.assertTrue(len(resp.data) > 0)
         self.assertIn('fido', resp.data)
         self.assertNotIn('kitty', resp.data)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         query_item = data[0]
         self.assertEqual(query_item['name'], 'fido')
 
@@ -204,7 +195,7 @@ class TestPetServer(unittest.TestCase):
         self.assertTrue(len(resp.data) > 0)
         self.assertIn('fido', resp.data)
         self.assertNotIn('kitty', resp.data)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         query_item = data[0]
         self.assertEqual(query_item['category'], 'dog')
 
@@ -215,7 +206,7 @@ class TestPetServer(unittest.TestCase):
         self.assertTrue(len(resp.data) > 0)
         # self.assertIn('fido', resp.data)
         # self.assertNotIn('harry', resp.data)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         query_item = data[0]
         self.assertEqual(query_item['available'], True)
 
@@ -226,7 +217,7 @@ class TestPetServer(unittest.TestCase):
         self.assertEqual(resp.status_code, HTTP_200_OK)
         resp = self.app.get('/pets/{}'.format(pet['_id']), content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_200_OK)
-        pet_data = json.loads(resp.data)
+        pet_data = resp.get_json()
         self.assertEqual(pet_data['available'], False)
 
     def test_purchase_not_available(self):
@@ -234,7 +225,7 @@ class TestPetServer(unittest.TestCase):
         pet = self.get_pet('harry')[0]
         resp = self.app.put('/pets/{}/purchase'.format(pet['_id']), content_type='application/json')
         self.assertEqual(resp.status_code, HTTP_400_BAD_REQUEST)
-        resp_json = json.loads(resp.get_data())
+        resp_json = resp.get_json()
         self.assertIn('not available', resp_json['message'])
 
 
@@ -249,14 +240,14 @@ class TestPetServer(unittest.TestCase):
         self.assertEqual(resp.status_code, HTTP_200_OK)
         self.assertGreater(len(resp.data), 0)
         self.assertIn(name, resp.data)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         return data
 
     def get_pet_count(self):
         """ save the current number of pets """
         resp = self.app.get('/pets')
         self.assertEqual(resp.status_code, HTTP_200_OK)
-        data = json.loads(resp.data)
+        data = resp.get_json()
         return len(data)
 
 
