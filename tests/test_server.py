@@ -17,8 +17,10 @@ Pet API Service Test Suite
 
 Test cases can be run with the following:
 nosetests -v --with-spec --spec-color
+
+nosetests --stop tests/test_server.py:TestPetServer
 """
-import unittest
+from unittest import TestCase
 from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 from service import app
 from service.models import Pet
@@ -35,7 +37,7 @@ HTTP_409_CONFLICT = 409
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
-class TestPetServer(unittest.TestCase):
+class TestPetServer(TestCase):
     """ Pet Service tests """
 
     def setUp(self):
@@ -49,9 +51,9 @@ class TestPetServer(unittest.TestCase):
 
     def test_index(self):
         """ Test the index page """
-        resp = self.app.get('/')
+        resp = self.app.get('/home')
         self.assertEqual(resp.status_code, HTTP_200_OK)
-        self.assertIn('Pet Demo REST API Service', resp.data)
+        self.assertIn(b'Pet Demo REST API Service', resp.data)
 
     def test_get_pet_list(self):
         """ Get a list of Pets """
@@ -182,8 +184,8 @@ class TestPetServer(unittest.TestCase):
         resp = self.app.get('/pets', query_string='name=fido')
         self.assertEqual(resp.status_code, HTTP_200_OK)
         self.assertTrue(len(resp.data) > 0)
-        self.assertIn('fido', resp.data)
-        self.assertNotIn('kitty', resp.data)
+        self.assertIn(b'fido', resp.data)
+        self.assertNotIn(b'kitty', resp.data)
         data = resp.get_json()
         query_item = data[0]
         self.assertEqual(query_item['name'], 'fido')
@@ -193,8 +195,8 @@ class TestPetServer(unittest.TestCase):
         resp = self.app.get('/pets', query_string='category=dog')
         self.assertEqual(resp.status_code, HTTP_200_OK)
         self.assertTrue(len(resp.data) > 0)
-        self.assertIn('fido', resp.data)
-        self.assertNotIn('kitty', resp.data)
+        self.assertIn(b'fido', resp.data)
+        self.assertNotIn(b'kitty', resp.data)
         data = resp.get_json()
         query_item = data[0]
         self.assertEqual(query_item['category'], 'dog')
@@ -239,7 +241,6 @@ class TestPetServer(unittest.TestCase):
                             query_string='name={}'.format(name))
         self.assertEqual(resp.status_code, HTTP_200_OK)
         self.assertGreater(len(resp.data), 0)
-        self.assertIn(name, resp.data)
         data = resp.get_json()
         return data
 

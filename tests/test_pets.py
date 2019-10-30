@@ -17,12 +17,14 @@ Pet Test Suite
 
 Test cases can be run with the following:
 nosetests -v --with-spec --spec-color
+
+nosetests --stop tests/test_pets.py:TestPets
 """
 
 # import os
 # import json
-import unittest
-from mock import MagicMock, patch
+from unittest import TestCase
+from unittest.mock import MagicMock, patch
 from requests import HTTPError, ConnectionError
 from service.models import Pet, DataValidationError
 
@@ -42,7 +44,7 @@ VCAP_SERVICES = {
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
-class TestPets(unittest.TestCase):
+class TestPets(TestCase):
     """ Test Cases for Pet Model """
 
     def setUp(self):

@@ -4,14 +4,11 @@ Package: app
 Package for the application models and services
 This module also sets up the logging to be used with gunicorn
 """
-# RESTful Doc links:
-# https://flask-restful.readthedocs.io/en/0.3.6/intermediate-usage.html
-# https://flask-restful.readthedocs.io/en/0.3.6/quickstart.html
 import os
 import sys
 import logging
 from flask import Flask
-from flask_restful import Api
+from flask_restplus import Api
 from .models import Pet, DataValidationError
 
 app = Flask(__name__)
@@ -20,15 +17,12 @@ app.config['LOGGING_LEVEL'] = logging.INFO
 
 api = Api(app)
 
-from service.resources import PetResource
-from service.resources import PetCollection
-from service.resources import HomePage
-from service.resources import PurchaseAction
-
-api.add_resource(HomePage, '/')
-api.add_resource(PetCollection, '/pets')
-api.add_resource(PetResource, '/pets/<pet_id>')
-api.add_resource(PurchaseAction, '/pets/<pet_id>/purchase')
+from service.resources import (
+    HomePage,
+    PetResource,
+    PetCollection,
+    PurchaseAction
+)
 
 # Set up logging for production
 print('Setting up logging for {}...'.format(__name__))

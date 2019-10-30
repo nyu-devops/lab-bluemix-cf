@@ -6,7 +6,8 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/xenial64"
+  config.vm.box = "ubuntu/bionic64"
+  config.vm.hostname = "ibmcloud"
 
   # Forward Flask and Kubernetes ports
   config.vm.network "forwarded_port", guest: 8001, host: 8001, host_ip: "127.0.0.1"
@@ -47,32 +48,26 @@ Vagrant.configure(2) do |config|
   end
 
   ######################################################################
-  # Setup a Python development environment
+  # Setup a Python 3 development environment
   ######################################################################
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y git zip tree python-pip python-dev
+    apt-get install -y git zip tree python3 python3-pip python3-venv
     apt-get -y autoremove
     pip install --upgrade pip
     # Install app dependencies
     cd /vagrant
-    sudo pip install -r requirements.txt
+    pip3 install -r requirements.txt
   SHELL
 
   ######################################################################
   # Add CouchDB docker container
   ######################################################################
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo mkdir -p /opt/couchdb/data
-    sudo chown vagrant:vagrant /opt/couchdb/data
-  SHELL
-
-  # Add CouchDB docker container
   # docker run -d --name couchdb -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass couchdb
   config.vm.provision "docker" do |d|
     d.pull_images "couchdb"
     d.run "couchdb",
-      args: "--restart=always -d --name couchdb -p 5984:5984 -v /opt/couchdb/data:/opt/couchdb/data -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass"
+      args: "--restart=always -d --name couchdb -p 5984:5984 -v couchdb:/opt/couchdb/data -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass"
   end
 
   ######################################################################
@@ -83,6 +78,7 @@ Vagrant.configure(2) do |config|
     echo " Installing IBM Cloud CLI..."
     echo "************************************\n"
     # Install IBM Cloud CLI as Vagrant user
+    # curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
     sudo -H -u vagrant sh -c 'curl -sL http://ibm.biz/idt-installer | bash'
     sudo -H -u vagrant sh -c 'ibmcloud config --usage-stats-collect false'
     sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
@@ -91,7 +87,7 @@ Vagrant.configure(2) do |config|
     echo "If you have an IBM Cloud API key in ~/.bluemix/apiKey.json"
     echo "You can login with the following command:"
     echo "\n"
-    echo "ibmcloud login -a https://api.ng.bluemix.net --apikey @~/.bluemix/apiKey.json"
+    echo "ibmcloud login -a https://cloud.ibm.com --apikey @~/.bluemix/apiKey.json -r us-south"
     echo "\n"
     echo "\n************************************"
     echo " For the Kubernetes Dashboard use:"
