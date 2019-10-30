@@ -1,13 +1,13 @@
 ---
 # This manifest deploys a Python Flask application with a Redis database
 applications:
-- name: lab-bluemix-cf
+- name: lab-python-jr
   path: .
-  instances: 2
+  instances: 1
   memory: 64M
   #random-route: true
   routes:
-  - route: lab-bluemix-cf.mybluemix.net
+  - route: lab-python-jjr.mybluemix.net
   disk_quota: 1024M
   buildpack: python_buildpack
   timeout: 180
