@@ -9,16 +9,19 @@ Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/bionic64"
   config.vm.hostname = "ibmcloud"
 
-  # Forward Flask and Kubernetes ports
-  config.vm.network "forwarded_port", guest: 8001, host: 8001, host_ip: "127.0.0.1"
+  # Forward Flask ports
   config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
+  # Forward CouchDB and Kubernetes ports
+  config.vm.network "forwarded_port", guest: 8001, host: 8001, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 5984, host: 5984, host_ip: "127.0.0.1"
+  
   config.vm.network "private_network", ip: "192.168.33.10"
 
   # Provider-specific configuration
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
     vb.memory = "1024"
-    vb.cpus = 1
+    vb.cpus = 2
     # Fixes some DNS issues on some networks
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
@@ -37,16 +40,16 @@ Vagrant.configure(2) do |config|
     config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
   end
 
-  # Copy your IBM Clouid API Key if you have one
-  if File.exists?(File.expand_path("~/.bluemix/apiKey.json"))
-    config.vm.provision "file", source: "~/.bluemix/apiKey.json", destination: "~/.bluemix/apiKey.json"
-  end
-
   # Copy your .vimrc file so that your VI editor looks right
   if File.exists?(File.expand_path("~/.vimrc"))
     config.vm.provision "file", source: "~/.vimrc", destination: "~/.vimrc"
   end
 
+  # Copy your IBM Cloud API Key if you have one
+  if File.exists?(File.expand_path("~/.bluemix/apiKey.json"))
+    config.vm.provision "file", source: "~/.bluemix/apiKey.json", destination: "~/.bluemix/apiKey.json"
+  end
+    
   ######################################################################
   # Setup a Python 3 development environment
   ######################################################################
@@ -54,10 +57,11 @@ Vagrant.configure(2) do |config|
     apt-get update
     apt-get install -y git zip tree python3 python3-pip python3-venv
     apt-get -y autoremove
-    pip install --upgrade pip
-    # Install app dependencies
-    cd /vagrant
-    pip3 install -r requirements.txt
+    # Create a Python3 Virtual Environment and Activate it in .profile
+    sudo -H -u vagrant sh -c 'python3 -m venv ~/venv'
+    sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
+    # Install app dependencies as vagrant user
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
   SHELL
 
   ######################################################################
@@ -70,6 +74,15 @@ Vagrant.configure(2) do |config|
       args: "--restart=always -d --name couchdb -p 5984:5984 -v couchdb:/opt/couchdb/data -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass"
   end
 
+  ############################################################
+  # Add Docker compose
+  ############################################################
+  config.vm.provision :docker_compose
+  # config.vm.provision :docker_compose,
+  #   yml: "/vagrant/docker-compose.yml",
+  #   rebuild: true,
+  #   run: "always"
+
   ######################################################################
   # Setup a Bluemix and Kubernetes environment
   ######################################################################
@@ -78,9 +91,7 @@ Vagrant.configure(2) do |config|
     echo " Installing IBM Cloud CLI..."
     echo "************************************\n"
     # Install IBM Cloud CLI as Vagrant user
-    # curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
     sudo -H -u vagrant sh -c 'curl -sL http://ibm.biz/idt-installer | bash'
-    sudo -H -u vagrant sh -c 'ibmcloud config --usage-stats-collect false'
     sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
     sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
     echo "\n"
@@ -93,6 +104,11 @@ Vagrant.configure(2) do |config|
     echo " For the Kubernetes Dashboard use:"
     echo " kubectl proxy --address='0.0.0.0'"
     echo "************************************\n"
+
+    # Show the GUI URL for Couch DB
+    echo "\n"
+    echo "CouchDB Admin GUI can be found at:\n"
+    echo "http://127.0.0.1:5984/_utils"    
   SHELL
 
 end
