@@ -11,12 +11,9 @@ from service.models import Pet, DataValidationError
 ######################################################################
 # GET /
 ######################################################################
-@api.route('/home')
-class HomePage(Resource):
-    """ Resource fior the Home Page """
-    def get(self):
-        """ Returns the index page """
-        return app.send_static_file('index.html')
+@app.route('/')
+def index():
+    return app.send_static_file('index.html')
 
 
 ######################################################################

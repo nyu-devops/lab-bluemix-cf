@@ -15,16 +15,24 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'please, tell nobody... Shhhh'
 app.config['LOGGING_LEVEL'] = logging.INFO
 
-api = Api(app)
+api = Api(app,
+          version='1.0.0',
+          title='Pet Demo REST API Service',
+          description='This is a sample server Pet store server.',
+          default='pets',
+          default_label='Pet shop operations',
+          doc='/apidocs/',
+          prefix='/api'
+         )
 
 from service.resources import (
-    HomePage,
     PetResource,
     PetCollection,
     PurchaseAction
 )
 
 # Set up logging for production
+app.logger.propagate = False
 print('Setting up logging for {}...'.format(__name__))
 if __name__ != '__main__':
     gunicorn_logger = logging.getLogger('gunicorn.error')
@@ -32,9 +40,9 @@ if __name__ != '__main__':
         app.logger.handlers = gunicorn_logger.handlers
         app.logger.setLevel(gunicorn_logger.level)
 
-app.logger.info('************************************************************')
-app.logger.info('        P E T   R E S T   A P I   S E R V I C E ')
-app.logger.info('************************************************************')
+app.logger.info(70 * '*')
+app.logger.info('  P E T   S E R V I C E   R U N N I N G  '.center(70, '*'))
+app.logger.info(70 * '*')
 app.logger.info('Logging established')
 
 

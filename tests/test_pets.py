@@ -21,12 +21,13 @@ nosetests -v --with-spec --spec-color
 nosetests --stop tests/test_pets.py:TestPets
 """
 
-# import os
-# import json
+import logging
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from requests import HTTPError, ConnectionError
 from service.models import Pet, DataValidationError
+
+logging.disable(logging.CRITICAL)
 
 VCAP_SERVICES = {
     'cloudantNoSQLDB': [
