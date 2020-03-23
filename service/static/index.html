@@ -16,17 +16,17 @@
 			<td>
 				<h1 id = "message">Pet Demo REST API Service</h1>
 				<p class='description'>
-				GET <a href="/pets" id = "get_pets">/pets</a> to see all the pets.
+				GET <a href="/api/pets" id = "get_pets">/api/pets</a> to see all the pets.
 				<br><br>
-                GET <a href="/pets?category=dog">/pets?category=dog</a> to see all of the pets in the 'dog' category.
+                GET <a href="/api/pets?category=dog">/api/pets?category=dog</a> to see all of the pets in the 'dog' category.
 				<br><br>
-				GET /pets/{id} retrieves a pet from the DB using an ID.
+				GET /api/pets/{id} retrieves a pet from the DB using an ID.
 				<br><br>
-				PUT /pets/{id} updates a pet using an ID.
+				PUT /api/pets/{id} updates a pet using an ID.
 				<br><br>
-				DELETE /pets/{id} removes a pet from the DB using an ID.
+				DELETE /api/pets/{id} removes a pet from the DB using an ID.
 				<br><br>
-				POST /pets creates an new pet.
+				POST /api/pets creates an new pet.
                 <p>Example Data:</p>
                 <pre>
     {
@@ -35,7 +35,7 @@
     }
                 </pre>
                 Try it now:
-                <form id="create_pets" action="/pets" method="post" enctype="application/json">
+                <form id="create_pets" action="/api/pets" method="post" enctype="application/json">
                     <input type="hidden" name="available" value="True" />
                     <div>
                       <label for="name">What is the name of the pet?</label>
