@@ -1,6 +1,17 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# WARNING: You will need the following plugin:
+# vagrant plugin install vagrant-docker-compose
+if Vagrant.plugins_enabled?
+  unless Vagrant.has_plugin?('vagrant-docker-compose')
+    puts 'Plugin missing.'
+    system('vagrant plugin install vagrant-docker-compose')
+    puts 'Dependencies installed, please try the command again.'
+    exit
+  end
+end
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
