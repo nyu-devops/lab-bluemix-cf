@@ -104,6 +104,7 @@ Vagrant.configure(2) do |config|
     # Install IBM Cloud CLI as Vagrant user
     sudo -H -u vagrant sh -c 'curl -sL http://ibm.biz/idt-installer | bash'
     sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
+    sudo -H -u vagrant sh -c "ibmcloud cf install"
     sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
     echo "\n"
     echo "If you have an IBM Cloud API key in ~/.bluemix/apiKey.json"
