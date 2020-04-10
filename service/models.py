@@ -41,9 +41,9 @@ from requests import HTTPError, ConnectionError
 
 # get configruation from enviuronment (12-factor)
 ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
-CLOUDANT_HOST = os.environ.get('CLOUDANT_HOST', 'localhost')
-CLOUDANT_USERNAME = os.environ.get('CLOUDANT_USERNAME', 'admin')
-CLOUDANT_PASSWORD = os.environ.get('CLOUDANT_PASSWORD', 'pass')
+COUCHDB_HOST = os.environ.get('COUCHDB_HOST', 'localhost')
+COUCHDB_USERNAME = os.environ.get('COUCHDB_USERNAME', 'admin')
+COUCHDB_PASSWORD = os.environ.get('COUCHDB_PASSWORD', 'pass')
 
 # global variables for retry (must be int)
 RETRY_COUNT = int(os.environ.get('RETRY_COUNT', 10))
@@ -272,11 +272,11 @@ class Pet(object):
         else:
             Pet.logger.info('VCAP_SERVICES and BINDING_CLOUDANT undefined.')
             creds = {
-                "username": CLOUDANT_USERNAME,
-                "password": CLOUDANT_PASSWORD,
-                "host": CLOUDANT_HOST,
+                "username": COUCHDB_USERNAME,
+                "password": COUCHDB_PASSWORD,
+                "host": COUCHDB_HOST,
                 "port": 5984,
-                "url": "http://"+CLOUDANT_HOST+":5984/"
+                "url": "http://"+COUCHDB_HOST+":5984/"
             }
             vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
 

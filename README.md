@@ -50,7 +50,7 @@ Before you can deploy this applicaiton to IBM Cloud you MUST edit the `manifest.
 Then from a terminal login into Bluemix and set the api endpoint to the Bluemix region you wish to deploy to:
 
 ```bash
-bx cf login -a api.ng.bluemix.net
+ic cf login -a api.ng.bluemix.net
 ```
 
 The login will ask you for you `email`(username) and `password`, plus the `organization` and `space` if there is more than one to choose from.
@@ -58,19 +58,19 @@ The login will ask you for you `email`(username) and `password`, plus the `organ
 From the root directory of the application code execute the following to deploy the application to Bluemix. (By default the `route` (application URL) will be based on your application name so make sure your application name is unique or use the -n option on the cf push command to define your hostname)
 
 ```bash
-bx cf push <YOUR_APP_NAME> -m 64M
+ic cf push <YOUR_APP_NAME> -m 64M
 ```
 
 to deploy when you don't have a `requirements.txt` or `setup.py` then use:
 
 ```bash
-bx cf push <YOUR_APP_NAME> -m 64M -b https://github.com/cloudfoundry/python-buildpack
+ic cf push <YOUR_APP_NAME> -m 64M -b https://github.com/cloudfoundry/python-buildpack
 ```
 
 to deploy with a different hostname to the app name:
 
 ```bash
-bx cf push <YOUR_APP_NAME> -m 64M -n <YOUR_HOST_NAME>
+ic cf push <YOUR_APP_NAME> -m 64M -n <YOUR_HOST_NAME>
 ```
 
 ## View App
