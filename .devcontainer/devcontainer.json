@@ -6,6 +6,7 @@
 	"extensions": [
 		"VisualVisualStudioExptTeam.vscodeintellicodeStudio",
 		"ms-python.python",
+        "alexkrechik.cucumberautocomplete",
     	"wholroyd.jinja",
 		"cstrap.flask-snippets",
 		"yzhang.markdown-all-in-one",
