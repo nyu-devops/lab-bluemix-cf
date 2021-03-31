@@ -3,22 +3,23 @@
 
 # WARNING: You will need the following plugin:
 # vagrant plugin install vagrant-docker-compose
-if Vagrant.plugins_enabled?
-  unless Vagrant.has_plugin?('vagrant-docker-compose')
-    puts 'Plugin missing.'
-    system('vagrant plugin install vagrant-docker-compose')
-    puts 'Dependencies installed, please try the command again.'
-    exit
-  end
-end
+# if Vagrant.plugins_enabled?
+#   unless Vagrant.has_plugin?('vagrant-docker-compose')
+#     puts 'Plugin missing.'
+#     system('vagrant plugin install vagrant-docker-compose')
+#     puts 'Dependencies installed, please try the command again.'
+#     exit
+#   end
+# end
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/bionic64"
-  config.vm.hostname = "ibmcloud"
+  # config.vm.box = "ubuntu/bionic64"
+  config.vm.box = "bento/ubuntu-20.04"
+  config.vm.hostname = "ubuntu"
 
   # Forward Flask ports
   config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
@@ -28,7 +29,9 @@ Vagrant.configure(2) do |config|
   
   config.vm.network "private_network", ip: "192.168.33.10"
 
-  # Provider-specific configuration
+  ############################################################
+  # Provider for VirtualBox on Intel only
+  ############################################################
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
     vb.memory = "1024"
@@ -36,6 +39,19 @@ Vagrant.configure(2) do |config|
     # Fixes some DNS issues on some networks
     vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+  end
+
+  ############################################################
+  # Provider for Docker on Intel or ARM
+  ############################################################
+  config.vm.provider :docker do |docker, override|
+    override.vm.box = nil
+    docker.image = "rofrano/vagrant-provider:debian"
+    docker.remains_running = true
+    docker.has_ssh = true
+    docker.privileged = true
+    docker.create_args = ["-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro"]
+    # docker.create_args = ['--platform=linux/arm64']
   end
 
   # Copy your .gitconfig file so that your git credentials are correct
@@ -66,13 +82,18 @@ Vagrant.configure(2) do |config|
   ######################################################################
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y git zip tree python3 python3-pip python3-venv
-    apt-get -y autoremove
+    apt-get install -y git tree wget vim python3-dev python3-pip python3-venv apt-transport-https libpq-dev
+    apt-get upgrade python3
+    pip3 install -U pip
+
+    # Update pip and wheel so Python packages build correctly
+    pip3 install wheel
+
     # Create a Python3 Virtual Environment and Activate it in .profile
     sudo -H -u vagrant sh -c 'python3 -m venv ~/venv'
     sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
-    # Install app dependencies as vagrant user
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip3 install wheel && cd /vagrant && pip install -r requirements.txt'
+    
   SHELL
 
   ######################################################################
@@ -88,7 +109,7 @@ Vagrant.configure(2) do |config|
   ############################################################
   # Add Docker compose
   ############################################################
-  config.vm.provision :docker_compose
+  # config.vm.provision :docker_compose
   # config.vm.provision :docker_compose,
   #   yml: "/vagrant/docker-compose.yml",
   #   rebuild: true,
@@ -104,7 +125,8 @@ Vagrant.configure(2) do |config|
     # Install IBM Cloud CLI as Vagrant user
     sudo -H -u vagrant sh -c 'curl -sL http://ibm.biz/idt-installer | bash'
     sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
-    sudo -H -u vagrant sh -c "ibmcloud cf install --version 6.46.1"
+    # sudo -H -u vagrant sh -c "ibmcloud cf install --version 6.46.1"
+    sudo -H -u vagrant sh -c "ibmcloud cf install"
     sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
     echo "\n"
     echo "If you have an IBM Cloud API key in ~/.bluemix/apiKey.json"
