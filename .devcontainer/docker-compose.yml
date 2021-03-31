@@ -7,7 +7,7 @@ services:
       dockerfile: .devcontainer/Dockerfile
     hostname: cloud
     ports:
-      - 5000:5000
+      - 8080:8080
     volumes:
       - ~/.gitconfig:/home/vscode/.gitconfig
       - ~/.ssh/:/home/vscode/.ssh/

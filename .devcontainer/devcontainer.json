@@ -14,5 +14,5 @@
 		"donjayamanne.githistory",
     	"bbenoist.vagrant"
 	],
-	"forwardPorts": [5000]
+	"forwardPorts": [8080]
 }

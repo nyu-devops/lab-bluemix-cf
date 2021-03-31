@@ -1,5 +1,5 @@
 # Image for a Python 3 development environment
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 # Add any tools that are needed beyond Python 3.7
 RUN apt-get update \
@@ -28,7 +28,7 @@ COPY requirements.txt .
 RUN pip --no-cache-dir install -U pip && \
     pip --no-cache-dir install -r requirements.txt
 
-EXPOSE 5000
+EXPOSE 8080
 
 # Become a regular user
 USER $USERNAME

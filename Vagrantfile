@@ -1,17 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-# WARNING: You will need the following plugin:
-# vagrant plugin install vagrant-docker-compose
-# if Vagrant.plugins_enabled?
-#   unless Vagrant.has_plugin?('vagrant-docker-compose')
-#     puts 'Plugin missing.'
-#     system('vagrant plugin install vagrant-docker-compose')
-#     puts 'Dependencies installed, please try the command again.'
-#     exit
-#   end
-# end
-
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -22,9 +11,8 @@ Vagrant.configure(2) do |config|
   config.vm.hostname = "ubuntu"
 
   # Forward Flask ports
-  config.vm.network "forwarded_port", guest: 5000, host: 5000, host_ip: "127.0.0.1"
-  # Forward CouchDB and Kubernetes ports
-  config.vm.network "forwarded_port", guest: 8001, host: 8001, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, host_ip: "127.0.0.1"
+  # Forward CouchDB ports
   config.vm.network "forwarded_port", guest: 5984, host: 5984, host_ip: "127.0.0.1"
   
   config.vm.network "private_network", ip: "192.168.33.10"
@@ -51,7 +39,6 @@ Vagrant.configure(2) do |config|
     docker.has_ssh = true
     docker.privileged = true
     docker.create_args = ["-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro"]
-    # docker.create_args = ['--platform=linux/arm64']
   end
 
   # Copy your .gitconfig file so that your git credentials are correct
@@ -82,7 +69,7 @@ Vagrant.configure(2) do |config|
   ######################################################################
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y git tree wget vim python3-dev python3-pip python3-venv apt-transport-https libpq-dev
+    apt-get install -y git tree wget vim python3-dev python3-pip python3-venv apt-transport-https
     apt-get upgrade python3
     pip3 install -U pip
 
@@ -106,15 +93,6 @@ Vagrant.configure(2) do |config|
       args: "--restart=always -d --name couchdb -p 5984:5984 -v couchdb:/opt/couchdb/data -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass"
   end
 
-  ############################################################
-  # Add Docker compose
-  ############################################################
-  # config.vm.provision :docker_compose
-  # config.vm.provision :docker_compose,
-  #   yml: "/vagrant/docker-compose.yml",
-  #   rebuild: true,
-  #   run: "always"
-
   ######################################################################
   # Setup a Bluemix and Kubernetes environment
   ######################################################################
@@ -128,17 +106,13 @@ Vagrant.configure(2) do |config|
     # sudo -H -u vagrant sh -c "ibmcloud cf install --version 6.46.1"
     sudo -H -u vagrant sh -c "ibmcloud cf install"
     sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
-    echo "\n"
+    echo "\n************************************"
     echo "If you have an IBM Cloud API key in ~/.bluemix/apiKey.json"
     echo "You can login with the following command:"
     echo "\n"
     echo "ibmcloud login -a https://cloud.ibm.com --apikey @~/.bluemix/apiKey.json -r us-south"
-    echo "\n"
+    echo "ibmcloud target --cf -o <your_org_here> -s dev"
     echo "\n************************************"
-    echo " For the Kubernetes Dashboard use:"
-    echo " kubectl proxy --address='0.0.0.0'"
-    echo "************************************\n"
-
     # Show the GUI URL for Couch DB
     echo "\n"
     echo "CouchDB Admin GUI can be found at:\n"
