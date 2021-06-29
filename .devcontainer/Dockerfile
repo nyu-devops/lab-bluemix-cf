@@ -1,7 +1,7 @@
 # Image for a Python 3 development environment
 FROM python:3.8-slim
 
-# Add any tools that are needed beyond Python 3.7
+# Add any tools that are needed beyond Python 3.8
 RUN apt-get update \
     && apt-get install -y sudo git tree curl wget jq \
     # Clean up
@@ -24,6 +24,16 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # Set up the development emvironment
 WORKDIR /workspace
 
+# Add the IBM Cloud CLI
+RUN wget -O bluemix-cli.tar.gz https://clis.cloud.ibm.com/download/bluemix-cli/1.4.0/linux64 && \
+    tar xzf bluemix-cli.tar.gz && \
+    cd Bluemix_CLI/ && \
+    ./install && \
+    cd .. && \
+    rm -fr Bluemix_CLI/ bluemix-cli.tar.gz && \
+    ibmcloud cf install
+
+# Install application dependencies
 COPY requirements.txt .
 RUN pip --no-cache-dir install -U pip && \
     pip --no-cache-dir install -r requirements.txt

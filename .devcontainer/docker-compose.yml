@@ -5,12 +5,13 @@ services:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-    hostname: cloud
+    hostname: nyu
     ports:
       - 8080:8080
     volumes:
       - ~/.gitconfig:/home/vscode/.gitconfig
       - ~/.ssh/:/home/vscode/.ssh/
+      - ~/.bluemix/:/home/vscode/.bluemix/
       - ..:/workspace
     command: sleep infinity
     environment:
