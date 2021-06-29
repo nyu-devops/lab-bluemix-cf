@@ -2,10 +2,9 @@
 RESTful Reseources for our Service
 """
 from flask import request, abort
-from flask_api import status    # HTTP Status Codes
 from flask_restplus import Api, Resource
 from werkzeug.exceptions import BadRequest
-from service import app, api
+from service import app, api, status    # HTTP Status Codes
 from service.models import Pet, DataValidationError
 
 ######################################################################
