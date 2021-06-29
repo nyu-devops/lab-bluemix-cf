@@ -6,8 +6,7 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure(2) do |config|
-  # config.vm.box = "ubuntu/bionic64"
-  config.vm.box = "bento/ubuntu-20.04"
+  config.vm.box = "ubuntu/focal64"
   config.vm.hostname = "ubuntu"
 
   # Forward Flask ports
@@ -30,7 +29,7 @@ Vagrant.configure(2) do |config|
   end
 
   ############################################################
-  # Provider for Docker on Intel or ARM
+  # Provider for Docker on Intel or ARM (aarch64)
   ############################################################
   config.vm.provider :docker do |docker, override|
     override.vm.box = nil
@@ -38,7 +37,9 @@ Vagrant.configure(2) do |config|
     docker.remains_running = true
     docker.has_ssh = true
     docker.privileged = true
-    docker.create_args = ["-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro"]
+    docker.volumes = ["/sys/fs/cgroup:/sys/fs/cgroup:ro"]
+    # Uncomment to force arm64 for testing images on Intel
+    # docker.create_args = ["--platform=linux/arm64"]     
   end
 
   # Copy your .gitconfig file so that your git credentials are correct
@@ -50,9 +51,6 @@ Vagrant.configure(2) do |config|
   if File.exists?(File.expand_path("~/.ssh/id_rsa"))
     config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/id_rsa"
   end
-  if File.exists?(File.expand_path("~/.ssh/id_rsa.pub"))
-    config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
-  end
 
   # Copy your .vimrc file so that your VI editor looks right
   if File.exists?(File.expand_path("~/.vimrc"))
@@ -63,24 +61,26 @@ Vagrant.configure(2) do |config|
   if File.exists?(File.expand_path("~/.bluemix/apiKey.json"))
     config.vm.provision "file", source: "~/.bluemix/apiKey.json", destination: "~/.bluemix/apiKey.json"
   end
-    
+  
   ######################################################################
-  # Setup a Python 3 development environment
+  # Create a Python 3 development environment
   ######################################################################
   config.vm.provision "shell", inline: <<-SHELL
+    echo "****************************************"
+    echo " INSTALLING PYTHON 3 ENVIRONMENT..."
+    echo "****************************************"
+    # Install Python 3 and dev tools 
     apt-get update
-    apt-get install -y git tree wget vim python3-dev python3-pip python3-venv apt-transport-https
+    apt-get install -y git vim tree python3 python3-pip python3-venv
     apt-get upgrade python3
-    pip3 install -U pip
-
-    # Update pip and wheel so Python packages build correctly
-    pip3 install wheel
-
+    
     # Create a Python3 Virtual Environment and Activate it in .profile
     sudo -H -u vagrant sh -c 'python3 -m venv ~/venv'
     sudo -H -u vagrant sh -c 'echo ". ~/venv/bin/activate" >> ~/.profile'
-    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip3 install wheel && cd /vagrant && pip install -r requirements.txt'
     
+    # Install app dependencies in virtual environment as vagrant user
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && pip install -U pip && pip install wheel'
+    sudo -H -u vagrant sh -c '. ~/venv/bin/activate && cd /vagrant && pip install -r requirements.txt'
   SHELL
 
   ######################################################################
@@ -101,10 +101,17 @@ Vagrant.configure(2) do |config|
     echo " Installing IBM Cloud CLI..."
     echo "************************************\n"
     # Install IBM Cloud CLI as Vagrant user
-    sudo -H -u vagrant sh -c 'curl -sL http://ibm.biz/idt-installer | bash'
-    sudo -H -u vagrant sh -c "echo 'source <(kubectl completion bash)' >> ~/.bashrc"
-    # sudo -H -u vagrant sh -c "ibmcloud cf install --version 6.46.1"
-    sudo -H -u vagrant sh -c "ibmcloud cf install"
+    sudo -H -u vagrant sh -c '
+    wget -O bluemix-cli.tar.gz https://clis.cloud.ibm.com/download/bluemix-cli/1.4.0/linux64 && \
+    tar xzvf bluemix-cli.tar.gz && \
+    cd Bluemix_CLI/ && \
+    ./install && \
+    cd .. && \
+    rm -fr Bluemix_CLI/ bluemix-cli.tar.gz && \
+    ibmcloud cf install
+    '
+
+    # Show completion instructions
     sudo -H -u vagrant sh -c "echo alias ic=/usr/local/bin/ibmcloud >> ~/.bash_aliases"
     echo "\n************************************"
     echo "If you have an IBM Cloud API key in ~/.bluemix/apiKey.json"
