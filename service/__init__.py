@@ -8,7 +8,7 @@ import os
 import sys
 import logging
 from flask import Flask
-from flask_restplus import Api
+from flask_restx import Api
 from .models import Pet, DataValidationError
 
 app = Flask(__name__)
