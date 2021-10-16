@@ -6,7 +6,7 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/focal64"
+  config.vm.box = "bento/ubuntu-21.04"
   config.vm.hostname = "ubuntu"
 
   # Forward Flask ports
