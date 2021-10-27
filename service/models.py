@@ -1,5 +1,5 @@
 ######################################################################
-# Copyright 2016, 2018 John Rofrano. All Rights Reserved.
+# Copyright 2016, 2021 John Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 """
 Pet Model that uses Cloudant
 
-You must initlaize this class before use by calling inititlize().
+You must initialize this class before use by calling initialize().
 This class looks for an environment variable called VCAP_SERVICES
 to get it's database credentials from. If it cannot find one, it
 tries to connect to Cloudant on the localhost. If that fails it looks
@@ -40,7 +40,7 @@ from cloudant.query import Query
 from cloudant.adapters import Replay429Adapter
 from requests import HTTPError, ConnectionError
 
-# get configruation from enviuronment (12-factor)
+# get configuration from environment (12-factor)
 ADMIN_PARTY = os.environ.get('ADMIN_PARTY', 'False').lower() == 'true'
 COUCHDB_HOST = os.environ.get('COUCHDB_HOST', 'localhost')
 COUCHDB_USERNAME = os.environ.get('COUCHDB_USERNAME', 'admin')
@@ -99,18 +99,6 @@ class Pet(object):
         if document:
             document.update(self.serialize())
             document.save()
-
-
-    @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
-           logger=logger)
-    def save(self):
-        """ Saves a Pet in the database """
-        if self.name is None:   # name is the only required field
-            raise DataValidationError('name attribute is not set')
-        if self.id:
-            self.update()
-        else:
-            self.create()
 
 
     @retry(HTTPError, delay=RETRY_DELAY, backoff=RETRY_BACKOFF, tries=RETRY_COUNT,
