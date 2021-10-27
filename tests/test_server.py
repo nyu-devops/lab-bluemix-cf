@@ -38,9 +38,9 @@ class TestPetServer(TestCase):
         self.app = app.test_client()
         Pet.init_db("tests")
         Pet.remove_all()
-        Pet("fido", "dog", True).save()
-        Pet("kitty", "cat", True).save()
-        Pet("harry", "hippo", False).save()
+        Pet("fido", "dog", True).create()
+        Pet("kitty", "cat", True).create()
+        Pet("harry", "hippo", False).create()
 
     def test_index(self):
         """ Test the index page """
