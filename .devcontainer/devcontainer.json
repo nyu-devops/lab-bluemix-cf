@@ -2,17 +2,21 @@
 	"name": "Python 3 & CouchDB",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "app",
-	"workspaceFolder": "/workspace",
+	"workspaceFolder": "/app",
+	"remoteUser": "devops",
 	"extensions": [
 		"VisualVisualStudioExptTeam.vscodeintellicodeStudio",
 		"ms-python.python",
-        "alexkrechik.cucumberautocomplete",
+		"ms-python.vscode-pylance",
     	"wholroyd.jinja",
 		"cstrap.flask-snippets",
 		"yzhang.markdown-all-in-one",
-		"hnw.vscode-auto-open-markdown-preview",
+		"DavidAnson.vscode-markdownlint",
+		"bierner.github-markdown-preview",        
 		"donjayamanne.githistory",
-    	"bbenoist.vagrant"
+		"redhat.vscode-yaml",
+		"bbenoist.vagrant",
+		"sonarsource.sonarlint-vscode"
 	],
-	"forwardPorts": [8080]
+	// "forwardPorts": [8080]
 }
