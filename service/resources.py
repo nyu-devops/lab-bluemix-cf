@@ -61,7 +61,7 @@ class PetResource(Resource):
             raise BadRequest(str(error))
 
         pet.id = pet_id
-        pet.save()
+        pet.update()
         return pet.serialize(), status.HTTP_200_OK
 
     def delete(self, pet_id):
@@ -144,7 +144,7 @@ class PetCollection(Resource):
             pet.deserialize(data)
         except DataValidationError as error:
             raise BadRequest(str(error))
-        pet.save()
+        pet.create()
         app.logger.info('Pet with new id [%s] saved!', pet.id)
         location_url = api.url_for(PetResource, pet_id=pet.id, _external=True)
         return pet.serialize(), status.HTTP_201_CREATED, {'Location': location_url}
@@ -164,5 +164,5 @@ class PurchaseAction(Resource):
         if not pet.available:
             abort(status.HTTP_400_BAD_REQUEST, "Pet with id '{}' is not available.".format(pet_id))
         pet.available = False
-        pet.save()
+        pet.update()
         return pet.serialize(), status.HTTP_200_OK
