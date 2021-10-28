@@ -16,6 +16,9 @@ Vagrant.configure(2) do |config|
   
   config.vm.network "private_network", ip: "192.168.33.10"
 
+  # Fix Windows execute bit problem (not needed for Mac users)
+  config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=755,fmode=644"]
+
   ############################################################
   # Provider for VirtualBox on Intel only
   ############################################################
