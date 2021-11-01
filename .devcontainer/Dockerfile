@@ -24,7 +24,7 @@ RUN groupadd --gid $USER_GID $USERNAME && \
 RUN if [ $(uname -m) != aarch64 ]; then \
         curl -fsSL https://clis.cloud.ibm.com/install/linux | sh && \
         echo "alias ic=ibmcloud" >> /home/$USERNAME/.bashrc && \
-        ibmcloud cf install; \
+        su -l devops -c "ibmcloud cf install"; \
     else \
         echo "aarch64 not supported"; \
     fi;
