@@ -14,7 +14,7 @@ Vagrant.configure(2) do |config|
   # Forward CouchDB ports
   config.vm.network "forwarded_port", guest: 5984, host: 5984, host_ip: "127.0.0.1"
   
-  config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.network "private_network", ip: "192.168.56.10"
 
   # Fix Windows execute bit problem (not needed for Mac users)
   config.vm.synced_folder ".", "/vagrant", mount_options: ["dmode=755,fmode=644"]
