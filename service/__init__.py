@@ -27,15 +27,15 @@ from .models import Pet
 
 # Create Flask application
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'please, tell nobody... Shhhh'
-app.config['LOGGING_LEVEL'] = logging.INFO
+app.config["SECRET_KEY"] = "please, tell nobody... Shhhh"
+app.config["LOGGING_LEVEL"] = logging.INFO
 
 # Import the routes After the Flask app is created
 # pylint: disable=wrong-import-position, cyclic-import
 from service import routes, models, error_handlers
 
 # Set up logging for production
-print("Setting up logging for {}...".format(__name__))
+print(f"Setting up logging for {__name__}...")
 app.logger.propagate = False
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
@@ -54,7 +54,8 @@ app.logger.info("  P E T   S T O R E   S E R V I C E  ".center(70, "*"))
 app.logger.info(70 * "*")
 app.logger.info("Service initialized!")
 
+
 @app.before_first_request
 def init_db(dbname="pets"):
-    """ Initialize the model """
+    """Initialize the model"""
     Pet.init_db(dbname)

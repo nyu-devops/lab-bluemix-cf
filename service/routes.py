@@ -27,10 +27,9 @@ DELETE /pets/{id} - deletes a Pet record in the database
 """
 
 from flask import jsonify, request, url_for, make_response, abort
-from werkzeug.exceptions import NotFound
 from service.models import Pet
-from . import status  # HTTP Status Codes
-from . import app  # Import Flask application
+from . import status    # HTTP Status Codes
+from . import app       # Import Flask application
 
 ######################################################################
 # GET INDEX
@@ -39,7 +38,7 @@ from . import app  # Import Flask application
 def index():
     """Root URL response"""
     app.logger.info("Request for Root URL")
-    return app.send_static_file('index.html')
+    return app.send_static_file("index.html")
 
 
 ######################################################################
@@ -54,21 +53,21 @@ def list_pets():
 
     category = request.args.get("category")
     name = request.args.get("name")
-    available = request.args.get('available')
-    gender = request.args.get('gender')
+    available = request.args.get("available")
+    gender = request.args.get("gender")
 
     if category:
-        app.logger.info('Filtering by category: %s', category)
+        app.logger.info("Filtering by category: %s", category)
         pets = Pet.find_by_category(category)
     elif name:
-        app.logger.info('Filtering by name:%s', name)
+        app.logger.info("Filtering by name:%s", name)
         pets = Pet.find_by_name(name)
     elif available:
-        app.logger.info('Filtering by available: %s', available)
-        is_available = available.lower() in ['yes', 'y', 'true', 't', '1']
+        app.logger.info("Filtering by available: %s", available)
+        is_available = available.lower() in ["yes", "y", "true", "t", "1"]
         pets = Pet.find_by_availability(is_available)
     elif gender:
-        app.logger.info('Filtering by gender: %s', gender)
+        app.logger.info("Filtering by gender: %s", gender)
         pets = Pet.find_by_gender(gender)
     else:
         pets = Pet.all()
@@ -91,7 +90,9 @@ def get_pets(pet_id):
     app.logger.info("Request for pet with id: %s", pet_id)
     pet = Pet.find(pet_id)
     if not pet:
-        abort(status.HTTP_404_NOT_FOUND, "Pet with id '{}' was not found.".format(pet_id))
+        abort(
+            status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found."
+        )
 
     app.logger.info("Returning pet: %s", pet.name)
     return jsonify(pet.serialize()), status.HTTP_200_OK
@@ -115,7 +116,7 @@ def create_pets():
     pet = Pet()
     pet.deserialize(request.get_json())
     pet.create()
-    
+
     message = pet.serialize()
     location_url = url_for("get_pets", pet_id=pet.id, _external=True)
 
@@ -169,12 +170,33 @@ def delete_pets(pet_id):
 
 
 ######################################################################
+# PURCHASE A PET
+######################################################################
+@app.route("/pets/<pet_id>/purchase", methods=["PUT"])
+def purchase_pets(pet_id):
+    """ Endpoint to Purchase a Pet """
+    app.logger.info("Request to Purchase pet with id: %s", pet_id)
+
+    pet = Pet.find(pet_id)
+    if not pet:
+        abort(status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found.")
+
+    if not pet.available:
+        abort(status.HTTP_409_CONFLICT, f"Pet with id '{pet_id}' is not available.")
+
+    pet.available = False
+    pet.update()
+    return jsonify(pet.serialize()), status.HTTP_200_OK
+
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 
+
 def check_content_type(media_type: str) -> None:
     """Checks that the media type is correct"""
-    content_type = request.headers.get('Content-Type')
+    content_type = request.headers.get("Content-Type")
     if not content_type:
         abort(status.HTTP_400_BAD_REQUEST, "No Content-Type set")
 

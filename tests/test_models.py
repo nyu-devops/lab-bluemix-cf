@@ -29,18 +29,20 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from requests import HTTPError, ConnectionError
 from service.models import Pet, Gender, DataValidationError
+from service import init_db
 from .factories import PetFactory
 
 logging.disable(logging.CRITICAL)
 
 VCAP_SERVICES = {
-    'cloudantNoSQLDB': [
-        {'credentials': {
-            'username': 'admin',
-            'password': 'pass',
-            'host': 'couchdb',
-            'port': 5984,
-            'url': 'http://admin:pass@couchdb:5984'
+    "cloudantNoSQLDB": [
+        {
+            "credentials": {
+                "username": "admin",
+                "password": "pass",
+                "host": "couchdb",
+                "port": 5984,
+                "url": "http://admin:pass@couchdb:5984",
             }
         }
     ]
@@ -50,11 +52,11 @@ VCAP_SERVICES = {
 #  T E S T   C A S E S
 ######################################################################
 class TestPets(TestCase):
-    """ Test Cases for Pet Model """
+    """Test Cases for Pet Model"""
 
     def setUp(self):
-        """ Initialize the Cloudant database """
-        Pet.init_db("tests")
+        """Initialize the Cloudant database"""
+        init_db("tests")
         Pet.remove_all()
 
     def test_create_a_pet(self):
@@ -84,7 +86,7 @@ class TestPets(TestCase):
         self.assertEqual(len(pets), 1)
 
     def test_create_a_pet_with_no_name(self):
-        """ Create a Pet with no name """
+        """Create a Pet with no name"""
         pet = Pet(None, "cat")
         self.assertRaises(DataValidationError, pet.create)
 
@@ -94,7 +96,7 @@ class TestPets(TestCase):
         logging.debug(pet)
         pet.create()
         self.assertIsNotNone(pet.id)
-        # Fetch it back 
+        # Fetch it back
         found_pet = Pet.find(pet.id)
         self.assertEqual(found_pet.id, pet.id)
         self.assertEqual(found_pet.name, pet.name)
@@ -180,13 +182,26 @@ class TestPets(TestCase):
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
     def test_deserialize_with_no_data(self):
-        """ Deserialize a Pet that has no data """
+        """Deserialize a Pet that has no data"""
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, None)
 
     def test_deserialize_with_no_name(self):
-        """ Deserialize a Pet that has no name """
+        """Deserialize a Pet that has no name"""
         data = {"category": "cat"}
+        pet = Pet()
+        self.assertRaises(DataValidationError, pet.deserialize, data)
+
+    def test_deserialize_with_no_gender(self):
+        """Deserialize a Pet with no gender data"""
+        data = {"name": "fido", "category": "dog", "available": True}
+        pet = Pet()
+        pet.deserialize(data)
+        self.assertEqual(pet.gender, Gender.UNKNOWN)
+
+    def test_deserialize_with_bad_gender(self):
+        """Deserialize a Pet with bad gender data"""
+        data = {"name": "fido", "category": "dog", "available": True, "gender": "foo"}
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
@@ -282,65 +297,71 @@ class TestPets(TestCase):
         self.assertEqual(len(pet_list), 2)
 
     def test_create_query_index(self):
-        """ Test create query index """
+        """Test create query index"""
         Pet("fido", "dog", False).create()
         Pet("kitty", "cat", True).create()
-        Pet.create_query_index('category')
-
+        Pet.create_query_index("category")
 
     ######################################################################
     #  P A T C H   A N D   M O C K   T E S T   C A S E S
     ######################################################################
 
     def test_disconnect(self):
-        """ Test Disconnet """
+        """Test Disconnet"""
         Pet.disconnect()
         pet = Pet("fido", "dog", False)
         self.assertRaises(AttributeError, pet.create)
 
-    @patch('cloudant.database.CloudantDatabase.create_document')
+    def test_connect(self):
+        """Test Connect"""
+        Pet.disconnect()
+        Pet.connect()
+        pet = Pet("fido", "dog", False)
+        pet.create()
+
+    @patch("cloudant.database.CloudantDatabase.create_document")
     def test_http_error(self, bad_mock):
-        """ Test a Bad Create with HTTP error """
+        """Test a Bad Create with HTTP error"""
         bad_mock.side_effect = HTTPError()
         pet = Pet("fido", "dog", False)
         pet.create()
         self.assertIsNone(pet.id)
 
-    @patch('cloudant.document.Document.exists')
+    @patch("cloudant.document.Document.exists")
     def test_document_not_exist(self, bad_mock):
-        """ Test a Bad Document Exists """
+        """Test a Bad Document Exists"""
         bad_mock.return_value = False
         pet = Pet("fido", "dog", False)
         pet.create()
         self.assertIsNone(pet.id)
 
-    @patch('cloudant.database.CloudantDatabase.__getitem__')
+    @patch("cloudant.database.CloudantDatabase.__getitem__")
     def test_key_error_on_update(self, bad_mock):
-        """ Test KeyError on update """
+        """Test KeyError on update"""
         bad_mock.side_effect = KeyError()
         pet = Pet("fido", "dog", False)
         pet.create()
-        pet.name = 'Fifi'
+        pet.name = "Fifi"
         pet.update()
-    #     self.assertEqual(pet.name, 'fido')
+        # self.assertEqual(pet.name, 'fido')
 
-    @patch('cloudant.database.CloudantDatabase.__getitem__')
+    @patch("cloudant.database.CloudantDatabase.__getitem__")
     def test_key_error_on_delete(self, bad_mock):
-        """ Test KeyError on delete """
+        """Test KeyError on delete"""
         bad_mock.side_effect = KeyError()
         pet = Pet("fido", "dog", False)
         pet.create()
         pet.delete()
 
-    @patch('cloudant.client.Cloudant.__init__')
+    @patch("cloudant.client.Cloudant.__init__")
     def test_connection_error(self, bad_mock):
-        """ Test Connection error handler """
+        """Test Connection error handler"""
         bad_mock.side_effect = ConnectionError()
-        self.assertRaises(AssertionError, Pet.init_db, 'test')
+        self.assertRaises(AssertionError, Pet.init_db, "test")
 
-    @patch.dict(os.environ, {'VCAP_SERVICES': json.dumps(VCAP_SERVICES)})
+    @patch.dict(os.environ, {"VCAP_SERVICES": json.dumps(VCAP_SERVICES)})
     def test_vcap_services(self):
-        """ Test if VCAP_SERVICES works """
+        """Test if VCAP_SERVICES works"""
         Pet.init_db("tests")
         self.assertIsNotNone(Pet.client)
         Pet("fido", "dog", True).create()
@@ -348,9 +369,16 @@ class TestPets(TestCase):
         self.assertNotEqual(len(pets), 0)
         self.assertEqual(pets[0].name, "fido")
 
-    @patch.dict(os.environ, {'BINDING_CLOUDANT': json.dumps(VCAP_SERVICES["cloudantNoSQLDB"][0]["credentials"])})
+    @patch.dict(
+        os.environ,
+        {
+            "BINDING_CLOUDANT": json.dumps(
+                VCAP_SERVICES["cloudantNoSQLDB"][0]["credentials"]
+            )
+        },
+    )
     def test_binding_cloudant(self):
-        """ Test if BINDING_CLOUDANT works """
+        """Test if BINDING_CLOUDANT works"""
         Pet.init_db("tests")
         self.assertIsNotNone(Pet.client)
         Pet("fido", "dog", True).create()

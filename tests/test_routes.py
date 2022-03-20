@@ -29,7 +29,7 @@ Test cases can be run with the following:
 import os
 import logging
 
-# from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 from unittest import TestCase
 from urllib.parse import quote_plus
 from service import app, status
@@ -64,6 +64,10 @@ class TestPetServer(TestCase):
     def tearDown(self):
         Pet.remove_all()
 
+    ######################################################################
+    # U T I L I T Y   F U N C T I O N S
+    ######################################################################
+
     def _create_pets(self, count):
         """Factory method to create pets in bulk"""
         pets = []
@@ -82,11 +86,15 @@ class TestPetServer(TestCase):
             pets.append(test_pet)
         return pets
 
+    ######################################################################
+    # T E S T   C R U D  E N D P O I N T S
+    ######################################################################
+
     def test_index(self):
         """Test the Home Page"""
-        resp = self.app.get('/')
+        resp = self.app.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertIn(b'Pet Demo REST API Service', resp.data)
+        self.assertIn(b"Pet Demo REST API Service", resp.data)
 
     def test_get_pet_list(self):
         """Get a list of Pets"""
@@ -100,9 +108,7 @@ class TestPetServer(TestCase):
         """Get a single Pet"""
         # get the id of a pet
         test_pet = self._create_pets(1)[0]
-        resp = self.app.get(
-            "/pets/{}".format(test_pet.id), content_type=CONTENT_TYPE_JSON
-        )
+        resp = self.app.get(f"/pets/{test_pet.id}", content_type=CONTENT_TYPE_JSON)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["name"], test_pet.name)
@@ -174,7 +180,7 @@ class TestPetServer(TestCase):
         logging.debug(new_pet)
         new_pet["category"] = "unknown"
         resp = self.app.put(
-            "/pets/{}".format(new_pet["_id"]),
+            f"/pets/{new_pet.get('_id')}",
             json=new_pet,
             content_type=CONTENT_TYPE_JSON,
         )
@@ -204,16 +210,60 @@ class TestPetServer(TestCase):
         """Delete a Pet"""
         test_pet = self._create_pets(1)[0]
         resp = self.app.delete(
-            f"{BASE_URL}/{test_pet.id}", 
-            content_type=CONTENT_TYPE_JSON
+            f"{BASE_URL}/{test_pet.id}", content_type=CONTENT_TYPE_JSON
         )
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(resp.data), 0)
         # make sure they are deleted
-        resp = self.app.get(
-            "{BASE_URL}/{test_pet.id}", 
-            content_type=CONTENT_TYPE_JSON
+        resp = self.app.get("{BASE_URL}/{test_pet.id}", content_type=CONTENT_TYPE_JSON)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    ######################################################################
+    # T E S T   A C T I O N S
+    ######################################################################
+
+    def test_purchase_a_pet(self):
+        """ Purchase a Pet """
+        pet = PetFactory()
+        pet.available = True
+        resp = self.app.post(
+            BASE_URL, json=pet.serialize(), content_type=CONTENT_TYPE_JSON
         )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        pet_data = resp.get_json()
+        pet_id = pet_data["_id"]
+        logging.info(f"Created Pet with id {pet_id} = {pet_data}")
+
+        # Request to purchase a Pet
+        resp = self.app.put(f'{BASE_URL}/{pet_id}/purchase')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Retrieve the Pet and make sue it is no longer available
+        resp = self.app.get(f'{BASE_URL}/{pet_id}')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        pet_data = resp.get_json()
+        self.assertEqual(pet_data['_id'], pet_id)
+        self.assertEqual(pet_data['available'], False)
+
+    def test_purchase_not_available(self):
+        """ Purchase a Pet that is not available """
+        pet = PetFactory()
+        pet.available = False
+        resp = self.app.post(
+            BASE_URL, json=pet.serialize(), content_type=CONTENT_TYPE_JSON
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        pet_data = resp.get_json()
+        pet_id = pet_data["_id"]
+        logging.info(f"Created Pet with id {pet_id} = {pet_data}")
+
+        # Request to purchase a Pet should fail
+        resp = self.app.put(f'{BASE_URL}/{pet_id}/purchase')
+        self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
+
+    def test_purchase_a_pet_not_found(self):
+        """ Purchase a Pet not found """
+        resp = self.app.put(f'{BASE_URL}/foo/purchase')
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     ######################################################################
@@ -226,10 +276,7 @@ class TestPetServer(TestCase):
         test_name = pets[0].name
         name_list = [pet for pet in pets if pet.name == test_name]
         logging.info(f"Name={test_name}: {len(name_list)} = {name_list}")
-        resp = self.app.get(
-            BASE_URL, 
-            query_string=f"name={quote_plus(test_name)}"
-        )
+        resp = self.app.get(BASE_URL, query_string=f"name={quote_plus(test_name)}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), len(name_list))
@@ -242,9 +289,11 @@ class TestPetServer(TestCase):
         pets = self._create_pets(10)
         test_category = pets[0].category
         category_list = [pet for pet in pets if pet.category == test_category]
-        logging.info(f"Category={test_category}: {len(category_list)} = {category_list}")
+        logging.info(
+            f"Category={test_category}: {len(category_list)} = {category_list}"
+        )
         resp = self.app.get(
-            BASE_URL, query_string="category={}".format(quote_plus(test_category))
+            BASE_URL, query_string=f"category={quote_plus(test_category)}"
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
@@ -258,10 +307,10 @@ class TestPetServer(TestCase):
         pets = self._create_pets(10)
         test_available = pets[0].available
         available_list = [pet for pet in pets if pet.available == test_available]
-        logging.info(f"Available={test_available}: {len(available_list)} = {available_list}")
-        resp = self.app.get(
-            BASE_URL, query_string=f"available={str(test_available)}"
+        logging.info(
+            f"Available={test_available}: {len(available_list)} = {available_list}"
         )
+        resp = self.app.get(BASE_URL, query_string=f"available={str(test_available)}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), len(available_list))
@@ -275,10 +324,7 @@ class TestPetServer(TestCase):
         test_gender = pets[0].gender.name
         gender_list = [pet for pet in pets if pet.gender.name == test_gender]
         logging.info(f"Gender={test_gender}: {len(gender_list)} = {gender_list}")
-        resp = self.app.get(
-            BASE_URL, 
-            query_string=f"gender={quote_plus(test_gender)}"
-        )
+        resp = self.app.get(BASE_URL, query_string=f"gender={quote_plus(test_gender)}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), len(gender_list))
@@ -286,18 +332,22 @@ class TestPetServer(TestCase):
         for pet in data:
             self.assertEqual(pet["gender"], test_gender)
 
+    ######################################################################
+    # T E S T   E R R O R   H A N D L E R S
+    ######################################################################
 
+    def test_method_not_allowed(self):
+        """ Test Method Not Allowed """
+        # There is no endpoint for PUT on the base url
+        resp = self.app.put(f'{BASE_URL}')
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-   # @patch('service.routes.Pet.find_by_name')
-    # def test_bad_request(self, bad_request_mock):
-    #     """ Test a Bad Request error from Find By Name """
-    #     bad_request_mock.side_effect = DataValidationError()
-    #     resp = self.app.get(BASE_URL, query_string='name=fido')
-    #     self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-
-    # @patch('service.routes.Pet.find_by_name')
-    # def test_mock_search_data(self, pet_find_mock):
-    #     """ Test showing how to mock data """
-    #     pet_find_mock.return_value = [MagicMock(serialize=lambda: {'name': 'fido'})]
-    #     resp = self.app.get(BASE_URL, query_string='name=fido')
-    #     self.assertEqual(resp.status_code, status.HTTP_200_OK)
+    @patch('service.routes.Pet.find_by_name')
+    def test_server_error(self, server_error_mock):
+        """ Test a 500 Internal Server Error Handler """
+        server_error_mock.return_value = None # code expects a list
+        # Turn off testing to allow production behavior
+        app.config["TESTING"] = False
+        resp = self.app.get(BASE_URL, query_string='name=fido')
+        app.config["TESTING"] = True
+        self.assertEqual(resp.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)

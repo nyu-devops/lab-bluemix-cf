@@ -20,6 +20,7 @@ Test Factory to make fake objects for testing
 import uuid
 import factory
 from factory.fuzzy import FuzzyChoice
+
 # from service.models import Pet, Gender
 from service.models import Pet, Gender
 
