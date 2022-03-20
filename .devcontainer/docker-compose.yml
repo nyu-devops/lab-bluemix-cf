@@ -6,13 +6,9 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
     hostname: nyu
-    ports:
-      - 8080:8080
     volumes:
-      - ~/.gitconfig:/home/devops/.gitconfig
-      - ~/.ssh/:/home/devops/.ssh/
-      - ~/.bluemix/:/home/devops/.bluemix/
       - ..:/app
+      - ~/.bluemix/:/home/devops/.bluemix/
     command: sleep infinity
     environment:
       FLASK_APP: service:app
@@ -25,6 +21,7 @@ services:
     depends_on:
       - couchdb
 
+  # CouchDB Dashboard: http://127.0.0.1:5984/_utils"
   couchdb:
     image: couchdb:latest
     hostname: couchdb
