@@ -15,12 +15,10 @@
             </td>
 			<td>
         <h1 id = "message">Pet Demo REST API Service</h1>
-        <p>API Documentation <a href="/apidocs">here</a></p>
-
         <p class='description'>
-				GET <a href="/api/pets" id = "get_pets">/api/pets</a> to see all the pets.
+				GET <a href="/pets" id = "get_pets">/api/pets</a> to see all the pets.
 				<br><br>
-                GET <a href="/api/pets?category=dog">/api/pets?category=dog</a> to see all of the pets in the 'dog' category.
+                GET <a href="/pets?category=dog">/api/pets?category=dog</a> to see all of the pets in the 'dog' category.
 				<br><br>
 				GET /api/pets/{id} retrieves a pet from the DB using an ID.
 				<br><br>
@@ -37,7 +35,7 @@
     }
                 </pre>
                 Try it now:
-                <form id="create_pets" action="/api/pets" method="post" enctype="application/json">
+                <form id="create_pets" action="/pets" method="post" enctype="application/json">
                     <input type="hidden" name="available" value="True" />
                     <div>
                       <label for="name">What is the name of the pet?</label>
