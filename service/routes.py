@@ -28,8 +28,8 @@ DELETE /pets/{id} - deletes a Pet record in the database
 
 from flask import jsonify, request, url_for, make_response, abort
 from service.models import Pet
-from . import status    # HTTP Status Codes
-from . import app       # Import Flask application
+from . import status  # HTTP Status Codes
+from . import app  # Import Flask application
 
 ######################################################################
 # GET INDEX
@@ -89,10 +89,9 @@ def get_pets(pet_id):
     """
     app.logger.info("Request for pet with id: %s", pet_id)
     pet = Pet.find(pet_id)
+
     if not pet:
-        abort(
-            status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found."
-        )
+        abort(status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found.")
 
     app.logger.info("Returning pet: %s", pet.name)
     return jsonify(pet.serialize()), status.HTTP_200_OK
@@ -110,20 +109,42 @@ def create_pets():
     or data that is sent via an html form post.
     """
     app.logger.info("Request to Create a pet")
-    check_content_type("application/json")
+    content_type = request.headers.get("Content-Type")
 
-    # Create the Pet from the json data
+    if not content_type:
+        abort(status.HTTP_400_BAD_REQUEST, "No Content-Type set")
+
+    data = {}
+    # Check for form submission data
+    if content_type == "application/x-www-form-urlencoded":
+        app.logger.info("Processing FORM data")
+        app.logger.info(type(request.form))
+        app.logger.info(request.form)
+        data = {
+            "name": request.form["name"],
+            "category": request.form["category"],
+            "available": request.form["available"].lower() in ["yes", "y", "true", "t", "1"],
+            "gender": request.form["gender"],
+        }
+        app.logger.info("Available: {} = {}".format(request.form["available"], data["available"]))
+    elif content_type == "application/json":
+        app.logger.info("Processing JSON data")
+        data = request.get_json()
+    else:
+        message = "Unsupported Content-Type: {}".format(content_type)
+        app.logger.info(message)
+        abort(status.HTTP_400_BAD_REQUEST, message)
+
+    # Create the Pet from the data
     pet = Pet()
-    pet.deserialize(request.get_json())
+    pet.deserialize(data)
     pet.create()
 
     message = pet.serialize()
     location_url = url_for("get_pets", pet_id=pet.id, _external=True)
 
     app.logger.info("Pet with ID [%s] created.", pet.id)
-    return make_response(
-        jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
-    )
+    return jsonify(pet.serialize()), status.HTTP_201_CREATED, {"Location": location_url}
 
 
 ######################################################################
@@ -138,6 +159,7 @@ def update_pets(pet_id):
     """
     app.logger.info("Request to Update pet with id: %s", pet_id)
     check_content_type("application/json")
+
     pet = Pet.find(pet_id)
     if not pet:
         abort(status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found.")
@@ -174,7 +196,7 @@ def delete_pets(pet_id):
 ######################################################################
 @app.route("/pets/<pet_id>/purchase", methods=["PUT"])
 def purchase_pets(pet_id):
-    """ Endpoint to Purchase a Pet """
+    """Endpoint to Purchase a Pet"""
     app.logger.info("Request to Purchase pet with id: %s", pet_id)
 
     pet = Pet.find(pet_id)
@@ -197,6 +219,7 @@ def purchase_pets(pet_id):
 def check_content_type(media_type: str) -> None:
     """Checks that the media type is correct"""
     content_type = request.headers.get("Content-Type")
+
     if not content_type:
         abort(status.HTTP_400_BAD_REQUEST, "No Content-Type set")
 

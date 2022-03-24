@@ -32,13 +32,15 @@ import logging
 from unittest.mock import MagicMock, patch
 from unittest import TestCase
 from urllib.parse import quote_plus
+from werkzeug.datastructures import MultiDict, ImmutableMultiDict
+
 from service import app, status
 from service.models import Pet
 from .factories import PetFactory
 
 # Disable all but critical errors during normal test run
 # uncomment for debugging failing tests
-logging.disable(logging.CRITICAL)
+# logging.disable(logging.CRITICAL)
 
 BASE_URL = "/pets"
 CONTENT_TYPE_JSON = "application/json"
@@ -108,14 +110,14 @@ class TestPetServer(TestCase):
         """Get a single Pet"""
         # get the id of a pet
         test_pet = self._create_pets(1)[0]
-        resp = self.app.get(f"/pets/{test_pet.id}", content_type=CONTENT_TYPE_JSON)
+        resp = self.app.get(f"{BASE_URL}/{test_pet.id}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(data["name"], test_pet.name)
 
     def test_get_pet_not_found(self):
         """Get a Pet thats not found"""
-        resp = self.app.get("/pets/0")
+        resp = self.app.get(f"{BASE_URL}/foo")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_pet(self):
@@ -142,7 +144,8 @@ class TestPetServer(TestCase):
             new_pet["gender"], test_pet.gender.name, "Gender does not match"
         )
         # Check that the location header was correct
-        resp = self.app.get(location, content_type=CONTENT_TYPE_JSON)
+        
+        resp = self.app.get(location)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         new_pet = resp.get_json()
         self.assertEqual(new_pet["name"], test_pet.name, "Names do not match")
@@ -156,14 +159,37 @@ class TestPetServer(TestCase):
             new_pet["gender"], test_pet.gender.name, "Gender does not match"
         )
 
+    def test_create_pet_from_formdata(self):
+        pet_data = MultiDict()
+        pet_data.add("name", "Timothy")
+        pet_data.add("category", "mouse")
+        pet_data.add("available", "true")
+        pet_data.add("gender", "MALE")
+        data = ImmutableMultiDict(pet_data)
+        resp = self.app.post(
+            BASE_URL, data=data, content_type="application/x-www-form-urlencoded"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        # Make sure location header is set
+        location = resp.headers.get("Location", None)
+        self.assertNotEqual(location, None)
+        # Check the data is correct
+        new_json = resp.get_json()
+        self.assertEqual(new_json["name"], "Timothy")
+
     def test_create_pet_no_data(self):
         """Create a Pet with missing data"""
-        resp = self.app.post(BASE_URL, json={}, content_type=CONTENT_TYPE_JSON)
+        resp = self.app.post(BASE_URL, data={}, content_type=CONTENT_TYPE_JSON)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_pet_no_content_type(self):
         """Create a Pet with no content type"""
-        resp = self.app.post(BASE_URL)
+        resp = self.app.post(BASE_URL, data={}, content_type=None)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_pet_bad_content_type(self):
+        """Create a Pet with unsupported content type"""
+        resp = self.app.post(BASE_URL, data={}, content_type="text/html")
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_pet(self):
@@ -180,7 +206,7 @@ class TestPetServer(TestCase):
         logging.debug(new_pet)
         new_pet["category"] = "unknown"
         resp = self.app.put(
-            f"/pets/{new_pet.get('_id')}",
+            f"{BASE_URL}/{new_pet.get('_id')}",
             json=new_pet,
             content_type=CONTENT_TYPE_JSON,
         )
@@ -191,16 +217,21 @@ class TestPetServer(TestCase):
     def test_update_pet_not_found(self):
         """Update a Pet that doesn't exist"""
         resp = self.app.put(
-            "/pets/foo",
+            f"{BASE_URL}/foo",
             json={},
             content_type=CONTENT_TYPE_JSON,
         )
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_update_pet_no_content_type(self):
+        """Update a Pet with no content type"""
+        resp = self.app.put(f"{BASE_URL}/foo", content_type=None)
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_update_pet_bad_content_type(self):
         """Update a Pet using the wrong content type"""
         resp = self.app.put(
-            "/pets/foo",
+            f"{BASE_URL}/foo",
             json={},
             content_type="text/html",
         )
@@ -223,7 +254,7 @@ class TestPetServer(TestCase):
     ######################################################################
 
     def test_purchase_a_pet(self):
-        """ Purchase a Pet """
+        """Purchase a Pet"""
         pet = PetFactory()
         pet.available = True
         resp = self.app.post(
@@ -235,18 +266,18 @@ class TestPetServer(TestCase):
         logging.info(f"Created Pet with id {pet_id} = {pet_data}")
 
         # Request to purchase a Pet
-        resp = self.app.put(f'{BASE_URL}/{pet_id}/purchase')
+        resp = self.app.put(f"{BASE_URL}/{pet_id}/purchase")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         # Retrieve the Pet and make sue it is no longer available
-        resp = self.app.get(f'{BASE_URL}/{pet_id}')
+        resp = self.app.get(f"{BASE_URL}/{pet_id}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         pet_data = resp.get_json()
-        self.assertEqual(pet_data['_id'], pet_id)
-        self.assertEqual(pet_data['available'], False)
+        self.assertEqual(pet_data["_id"], pet_id)
+        self.assertEqual(pet_data["available"], False)
 
     def test_purchase_not_available(self):
-        """ Purchase a Pet that is not available """
+        """Purchase a Pet that is not available"""
         pet = PetFactory()
         pet.available = False
         resp = self.app.post(
@@ -258,12 +289,12 @@ class TestPetServer(TestCase):
         logging.info(f"Created Pet with id {pet_id} = {pet_data}")
 
         # Request to purchase a Pet should fail
-        resp = self.app.put(f'{BASE_URL}/{pet_id}/purchase')
+        resp = self.app.put(f"{BASE_URL}/{pet_id}/purchase")
         self.assertEqual(resp.status_code, status.HTTP_409_CONFLICT)
 
     def test_purchase_a_pet_not_found(self):
-        """ Purchase a Pet not found """
-        resp = self.app.put(f'{BASE_URL}/foo/purchase')
+        """Purchase a Pet not found"""
+        resp = self.app.put(f"{BASE_URL}/foo/purchase")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     ######################################################################
@@ -337,17 +368,17 @@ class TestPetServer(TestCase):
     ######################################################################
 
     def test_method_not_allowed(self):
-        """ Test Method Not Allowed """
+        """Test Method Not Allowed"""
         # There is no endpoint for PUT on the base url
-        resp = self.app.put(f'{BASE_URL}')
+        resp = self.app.put(f"{BASE_URL}")
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @patch('service.routes.Pet.find_by_name')
+    @patch("service.routes.Pet.find_by_name")
     def test_server_error(self, server_error_mock):
-        """ Test a 500 Internal Server Error Handler """
-        server_error_mock.return_value = None # code expects a list
+        """Test a 500 Internal Server Error Handler"""
+        server_error_mock.return_value = None  # code expects a list
         # Turn off testing to allow production behavior
         app.config["TESTING"] = False
-        resp = self.app.get(BASE_URL, query_string='name=fido')
+        resp = self.app.get(BASE_URL, query_string="name=fido")
         app.config["TESTING"] = True
         self.assertEqual(resp.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
