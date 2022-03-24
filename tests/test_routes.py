@@ -40,7 +40,7 @@ from .factories import PetFactory
 
 # Disable all but critical errors during normal test run
 # uncomment for debugging failing tests
-logging.disable(logging.CRITICAL)
+# logging.disable(logging.CRITICAL)
 
 BASE_URL = "/pets"
 CONTENT_TYPE_JSON = "application/json"
@@ -163,7 +163,8 @@ class TestPetServer(TestCase):
         pet_data = MultiDict()
         pet_data.add("name", "Timothy")
         pet_data.add("category", "mouse")
-        pet_data.add("available", "True")
+        pet_data.add("available", "true")
+        pet_data.add("gender", "MALE")
         data = ImmutableMultiDict(pet_data)
         resp = self.app.post(
             BASE_URL, data=data, content_type="application/x-www-form-urlencoded"
