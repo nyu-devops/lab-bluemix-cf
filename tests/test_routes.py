@@ -36,7 +36,7 @@ from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 
 from service import app, status
 from service.models import Pet
-from .factories import PetFactory
+from tests.factories import PetFactory
 
 # Disable all but critical errors during normal test run
 # uncomment for debugging failing tests

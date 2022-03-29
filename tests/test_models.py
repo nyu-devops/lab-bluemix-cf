@@ -30,7 +30,7 @@ from unittest.mock import MagicMock, patch
 from requests import HTTPError, ConnectionError
 from service.models import Pet, Gender, DataValidationError
 from service import init_db
-from .factories import PetFactory
+from tests.factories import PetFactory
 
 # This is for production testing
 # Comment this out when debugging
