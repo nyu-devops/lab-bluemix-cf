@@ -25,5 +25,5 @@
 		"bbenoist.vagrant"
 	],
 	// "forwardPorts": [8080]
-	"postCreateCommand": "pipenv install --dev && bash scripts/linux-tools.sh"
+	"postCreateCommand": "bash scripts/linux-tools.sh"
 }
