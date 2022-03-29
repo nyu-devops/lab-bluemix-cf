@@ -21,9 +21,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Set up the Python development environment
 WORKDIR /app
-COPY requirements.txt .
-RUN python -m pip install --upgrade pip wheel && \
-    pip install -r requirements.txt
+ENV PIPENV_VENV_IN_PROJECT "enabled"
+RUN python -m pip install --upgrade pip wheel pipenv
 
 ENV PORT 8080
 EXPOSE $PORT

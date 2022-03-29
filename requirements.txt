@@ -1,3 +1,6 @@
+# Werkzeug keeps breaking Flask!
+Werkzeug==2.0.3
+
 # Dependencies
 Flask==2.0.2
 flask-restx==0.5.1
