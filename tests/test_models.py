@@ -47,6 +47,15 @@ class TestPets(TestCase):
         init_db("tests")
         Pet.remove_all()
 
+    def _create_pets(self, count: int) -> list:
+        """Creates a collection of pets in the database"""
+        pet_collection = []
+        for _ in range(count):
+            pet = PetFactory()
+            pet.create()
+            pet_collection.append(pet)
+        return pet_collection        
+
     def test_create_a_pet(self):
         """Create a pet and assert that has correct attributes"""
         pet = Pet(name="Fido", category="dog", available=True, gender=Gender.MALE)
@@ -65,13 +74,18 @@ class TestPets(TestCase):
         pets = Pet.all()
         self.assertEqual(pets, [])
         pet = PetFactory()
-        self.assertTrue(pet is not None)
+        logging.debug("Pet: %s", pet.serialize())
+        self.assertNotEqual(pet, None)
         self.assertEqual(pet.id, None)
         pet.create()
         # Assert that it was assigned an id and shows up in the database
-        self.assertIsNotNone(pet.id)
+        self.assertNotEqual(pet.id, None)
         pets = Pet.all()
         self.assertEqual(len(pets), 1)
+        self.assertEqual(pets[0].name, pet.name)
+        self.assertEqual(pets[0].category, pet.category)
+        self.assertEqual(pets[0].available, pet.available)
+        self.assertEqual(pets[0].gender, pet.gender)
 
     def test_create_a_pet_with_no_name(self):
         """Create a Pet with no name"""
@@ -217,76 +231,69 @@ class TestPets(TestCase):
         self.assertEqual(pet.gender, Gender.MALE)
 
     def test_find_pet(self):
-        """Find a Pet by ID"""
-        pets = PetFactory.create_batch(3)
-        for pet in pets:
-            pet.create()
-        logging.debug(pets)
-        # make sure they got saved
-        self.assertEqual(len(Pet.all()), 3)
-        # find the 2nd pet in the list
-        pet = Pet.find(pets[1].id)
+        """Find a Pet by id"""
+        pets = self._create_pets(5)
+        saved_pet = pets[0]
+        pet = Pet.find(saved_pet.id)
         self.assertIsNot(pet, None)
-        self.assertEqual(pet.id, pets[1].id)
-        self.assertEqual(pet.name, pets[1].name)
-        self.assertEqual(pet.available, pets[1].available)
-
+        self.assertEqual(pet.id, saved_pet.id)
+        self.assertEqual(pet.name, saved_pet.name)
+        self.assertEqual(pet.category, saved_pet.category)
+        self.assertEqual(pet.available, saved_pet.available)
+        self.assertEqual(pet.gender, saved_pet.gender)
+        
     def test_pet_not_found(self):
         """Pet not found"""
         pet = Pet.find("foo")
         self.assertIsNone(pet)
 
-    def test_find_by_category(self):
-        """Find Pets by Category"""
-        Pet(name="Fido", category="dog", available=True).create()
-        Pet(name="Kitty", category="cat", available=False).create()
-        pets = PetFactory.create_batch(3)
-        for pet in pets:
-            pet.create()
-
-        pets = Pet.find_by_category("cat")
-        self.assertEqual(pets[0].category, "cat")
-        self.assertEqual(pets[0].name, "Kitty")
-        self.assertEqual(pets[0].available, False)
-
     def test_find_by_name(self):
         """Find a Pet by Name"""
-        Pet(name="Fido", category="dog", available=True).create()
-        Pet(name="Kitty", category="cat", available=False).create()
-        pets = Pet.find_by_name("Kitty")
-        self.assertEqual(pets[0].category, "cat")
-        self.assertEqual(pets[0].name, "Kitty")
-        self.assertEqual(pets[0].available, False)
+        self._create_pets(5)
+        saved_pet = PetFactory()
+        saved_pet.name = "Rumpelstiltskin"
+        saved_pet.create()
+        # search by name
+        pets = Pet.find_by_name("Rumpelstiltskin")
+        self.assertNotEqual(len(pets), 0)
+        pet = pets[0]
+        self.assertEqual(pet.name, "Rumpelstiltskin")
+        self.assertEqual(pet.category, saved_pet.category)
+        self.assertEqual(pet.available, saved_pet.available)
+        self.assertEqual(pet.gender, saved_pet.gender)
+
+    def test_find_by_category(self):
+        """Find a Pet by Category"""
+        pets = self._create_pets(5)
+        category = pets[0].category
+        category_count =  len([pet for pet in pets if pet.category == category])
+        logging.debug("Looking for %d Pets in category %s", category_count, category)
+        found_pets = Pet.find_by_category(category)
+        self.assertEqual(len(found_pets), category_count)
+        for pet in found_pets:
+            self.assertEqual(pet.category, category)
 
     def test_find_by_availability(self):
-        """Find Pets by Availability"""
-        Pet(name="Fido", category="dog", available=True).create()
-        Pet(name="Kitty", category="cat", available=False).create()
-        Pet(name="Fifi", category="dog", available=True).create()
-        pets = Pet.find_by_availability(False)
-        pet_list = list(pets)
-        self.assertEqual(len(pet_list), 1)
-        self.assertEqual(pets[0].name, "Kitty")
-        self.assertEqual(pets[0].category, "cat")
-        pets = Pet.find_by_availability(True)
-        pet_list = list(pets)
-        self.assertEqual(len(pet_list), 2)
+        """Find a Pet by Availability"""
+        pets = self._create_pets(5)
+        available = pets[0].available
+        available_count = len([pet for pet in pets if pet.available == available])
+        logging.debug("Looking for %d Pets where availabe is %s", available_count, available)
+        found_pets = Pet.find_by_availability(available)
+        self.assertEqual(len(found_pets), available_count)
+        for pet in found_pets:
+            self.assertEqual(pet.available, available)
 
     def test_find_by_gender(self):
-        """Find Pets by Gender"""
-        Pet(name="Fido", category="dog", available=True, gender=Gender.MALE).create()
-        Pet(
-            name="Kitty", category="cat", available=False, gender=Gender.FEMALE
-        ).create()
-        Pet(name="Fifi", category="dog", available=True, gender=Gender.MALE).create()
-        pets = Pet.find_by_gender(Gender.FEMALE.name)
-        pet_list = list(pets)
-        self.assertEqual(len(pet_list), 1)
-        self.assertEqual(pets[0].name, "Kitty")
-        self.assertEqual(pets[0].category, "cat")
-        pets = Pet.find_by_gender(Gender.MALE.name)
-        pet_list = list(pets)
-        self.assertEqual(len(pet_list), 2)
+        """Find a Pet by Gender"""
+        pets = self._create_pets(5)
+        gender = pets[0].gender
+        gender_count =  len([pet for pet in pets if pet.gender == gender])
+        logging.debug("Looking for %d Pets where gender is %s", gender_count, gender)
+        found_pets = Pet.find_by_gender(gender.name)
+        self.assertEqual(len(found_pets), gender_count)
+        for pet in found_pets:
+            self.assertEqual(pet.gender, gender)
 
     def test_create_query_index(self):
         """Test create query index"""
