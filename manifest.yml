@@ -1,18 +1,19 @@
 ---
-# This manifest deploys a Python Flask application with a Cloudant database
+# This manifest deploys a Python Flask application with a ElephantSQL database
+# To change the hostname deploy with:
+#   cf push "${CF_APP}" -n <new-hostname>
 applications:
 - name: lab-bluemix-jr
   path: .
   instances: 2
-  memory: 64M
-  routes:
-  - route: lab-bluemix-jr.us-south.cf.appdomain.cloud
+  memory: 128M
+  hostname: lab-bluemix-jr
+  domain: us-south.cf.appdomain.cloud
   disk_quota: 1024M
-  buildpacks: 
-  - python_buildpack
+  buildpack: python_buildpack
   timeout: 180
   services:
-  - Cloudant
+  - ElephantSQL
   env:
     FLASK_APP : service:app
     FLASK_DEBUG : false
