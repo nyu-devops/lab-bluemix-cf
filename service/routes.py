@@ -31,6 +31,7 @@ from service import app  # Import Flask application
 from service.models import Pet
 from service.utils import status  # HTTP Status Codes
 
+
 ######################################################################
 # GET INDEX
 ######################################################################
@@ -123,15 +124,18 @@ def create_pets():
         data = {
             "name": request.form["name"],
             "category": request.form["category"],
-            "available": request.form["available"].lower() in ["yes", "y", "true", "t", "1"],
+            "available": request.form["available"].lower()
+            in ["yes", "y", "true", "t", "1"],
             "gender": request.form["gender"],
         }
-        app.logger.info("Available: {} = {}".format(request.form["available"], data["available"]))
+        app.logger.info(
+            "Available: %s = %s", request.form["available"], data["available"]
+        )
     elif content_type == "application/json":
         app.logger.info("Processing JSON data")
         data = request.get_json()
     else:
-        message = "Unsupported Content-Type: {}".format(content_type)
+        message = f"Unsupported Content-Type: {content_type}"
         app.logger.info(message)
         abort(status.HTTP_400_BAD_REQUEST, message)
 

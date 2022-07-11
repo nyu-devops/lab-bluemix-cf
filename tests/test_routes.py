@@ -26,10 +26,9 @@ Test cases can be run with the following:
     nosetests --stop tests/test_service.py:TestPetServer
 """
 
-import os
 import logging
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from unittest import TestCase
 from urllib.parse import quote_plus
 from werkzeug.datastructures import MultiDict, ImmutableMultiDict
@@ -302,7 +301,9 @@ class TestPetServer(TestCase):
         pets = self._create_pets(10)
         test_category = pets[0].category
         category_list = [pet for pet in pets if pet.category == test_category]
-        logging.info("Category=%s: %d = %s", test_category, len(category_list), category_list)
+        logging.info(
+            "Category=%s: %d = %s", test_category, len(category_list), category_list
+        )
         resp = self.app.get(
             BASE_URL, query_string=f"category={quote_plus(test_category)}"
         )
@@ -318,11 +319,10 @@ class TestPetServer(TestCase):
         pets = self._create_pets(10)
         test_available = pets[0].available
         available_list = [pet for pet in pets if pet.available == test_available]
-        logging.info("Available=%s: %d = %s", test_available, len(available_list), available_list)
-        resp = self.app.get(
-            BASE_URL, 
-            query_string=f"available={str(test_available)}"
+        logging.info(
+            "Available=%s: %d = %s", test_available, len(available_list), available_list
         )
+        resp = self.app.get(BASE_URL, query_string=f"available={str(test_available)}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), len(available_list))
@@ -336,10 +336,7 @@ class TestPetServer(TestCase):
         test_gender = pets[0].gender.name
         gender_list = [pet for pet in pets if pet.gender.name == test_gender]
         logging.info("Gender=%s: %d = %s", test_gender, len(gender_list), gender_list)
-        resp = self.app.get(
-            BASE_URL, 
-            query_string=f"gender={quote_plus(test_gender)}"
-        )
+        resp = self.app.get(BASE_URL, query_string=f"gender={quote_plus(test_gender)}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         data = resp.get_json()
         self.assertEqual(len(data), len(gender_list))

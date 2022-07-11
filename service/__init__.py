@@ -44,6 +44,7 @@ app.logger.info("  P E T   S T O R E   S E R V I C E  ".center(70, "*"))
 app.logger.info(70 * "*")
 app.logger.info("Service initialized!")
 
+
 @app.before_first_request
 def init_db(dbname="pets"):
     """Initialize the model"""

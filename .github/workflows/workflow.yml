@@ -1,11 +1,12 @@
 name: CI Build
 on:
   push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
+    paths-ignore:
+    - 'README.md'
+    - '.vscode/**'
 
 jobs:
   build:
@@ -32,11 +33,22 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel
           pip install -r requirements.txt
+
+      - name: Checking code quality
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+          # Run pylint on the service
+          pylint service
+
       - name: Create the test database
         run: |
           apt-get update
           apt-get install -y curl
           curl -X PUT http://admin:pass@couchdb:5984/test
+
       - name: Run unit tests with nose
         run: nosetests
         env:

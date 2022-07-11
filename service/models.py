@@ -33,14 +33,16 @@ Docker Note:
 """
 
 import os
+import sys
 import json
 import logging
 from enum import Enum
 from retry import retry
 from cloudant.client import Cloudant
 from cloudant.query import Query
+from cloudant.database import CloudantDatabase
 from cloudant.adapters import Replay429Adapter
-from requests import HTTPError, ConnectionError
+from requests import HTTPError, ConnectionError  # pylint: disable=redefined-builtin
 
 logger = logging.getLogger("flask.app")
 
@@ -59,8 +61,6 @@ RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
 class DataValidationError(Exception):
     """Custom Exception with data validation fails"""
 
-    pass
-
 
 class Gender(Enum):
     """Enumeration of valid Pet Genders"""
@@ -70,22 +70,22 @@ class Gender(Enum):
     UNKNOWN = 3
 
 
-class Pet(object):
+class Pet():
     """Pet interface to database"""
 
     logger = logging.getLogger(__name__)
-    client = None  # cloudant.client.Cloudant
-    database = None  # cloudant.database.CloudantDatabase
+    client: Cloudant = None
+    database: CloudantDatabase = None
 
     def __init__(
         self,
         name: str = None,
         category: str = None,
         available: bool = True,
-        gender: Gender = Gender.UNKNOWN,
+        gender: Gender = Gender.UNKNOWN
     ):
         """Constructor"""
-        self.id = None
+        self.id = None      # pylint: disable=C0103
         self.name = name
         self.category = category
         self.available = available
@@ -124,7 +124,7 @@ class Pet(object):
     def update(self) -> None:
         """Updates a Pet in the database"""
         try:
-            document = self.database[self.id]
+            document = self.database[self.id]   # pylint: disable=unsubscriptable-object
         except KeyError:
             document = None
         if document:
@@ -141,7 +141,7 @@ class Pet(object):
     def delete(self) -> None:
         """Deletes a Pet from the database"""
         try:
-            document = self.database[self.id]
+            document = self.database[self.id]   # pylint: disable=unsubscriptable-object
         except KeyError:
             document = None
         if document:
@@ -190,13 +190,13 @@ class Pet(object):
                 self.gender = Gender.UNKNOWN
 
         except AttributeError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0])
+            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
-            raise DataValidationError("Invalid pet: missing " + error.args[0])
+            raise DataValidationError("Invalid pet: missing " + error.args[0]) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid pet: body of request contained bad or no data"
-            )
+                "Invalid pet: body of request contained bad or no data" + error.args[0]
+            ) from error
 
         # if there is no id and the data has one, assign it
         if not self.id and "_id" in data:
@@ -242,7 +242,7 @@ class Pet(object):
     )
     def remove_all(cls) -> None:
         """Removes all documents from the database (use for testing)"""
-        for document in cls.database:
+        for document in cls.database:   # pylint: disable=not-an-iterable
             document.delete()
 
     @classmethod
@@ -256,7 +256,7 @@ class Pet(object):
     def all(cls) -> list:
         """Query that returns all Pets"""
         results = []
-        for doc in cls.database:
+        for doc in cls.database:   # pylint: disable=not-an-iterable
             pet = Pet().deserialize(doc)
             pet.id = doc["_id"]
             results.append(pet)
@@ -304,7 +304,7 @@ class Pet(object):
         """
         logger.info("Processing lookup for id %s ...", pet_id)
         try:
-            document = cls.database[pet_id]
+            document = cls.database[pet_id]  # pylint: disable=unsubscriptable-object)
             return Pet().deserialize(document)
         except KeyError:
             return None
@@ -398,15 +398,13 @@ class Pet(object):
     ############################################################
 
     @staticmethod
-    def init_db(dbname: str = "pets") -> None:
-        """
-        Initialized Cloudant database connection
-        """
-        opts = {}
+    def get_vcap_services():
+        """Gets VCAP_SERVICES from environment"""
         vcap_services = {}
+
         # Try and get VCAP from the environment or a file if developing
         if "VCAP_SERVICES" in os.environ:
-            Pet.logger.info("Running in Bluemix mode.")
+            Pet.logger.info("Running in Cloud Foundry mode.")
             vcap_services = json.loads(os.environ["VCAP_SERVICES"])
         # if VCAP_SERVICES isn't found, maybe we are running on Kubernetes?
         elif "BINDING_CLOUDANT" in os.environ:
@@ -424,6 +422,16 @@ class Pet(object):
             }
             vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
 
+        return vcap_services
+
+    @staticmethod
+    def init_db(dbname: str = "pets") -> None:
+        """
+        Initialized Cloudant database connection
+        """
+        opts = {}
+        vcap_services = Pet.get_vcap_services()
+
         # Look for Cloudant in VCAP_SERVICES
         for service in vcap_services:
             if service.startswith("cloudantNoSQLDB"):
@@ -439,7 +447,7 @@ class Pet(object):
                 "Error - Failed to retrieve options. "
                 "Check that app is bound to a Cloudant service."
             )
-            exit(-1)
+            sys.exit(-1)
 
         Pet.logger.info("Cloudant Endpoint: %s", opts["url"])
         try:
@@ -454,15 +462,15 @@ class Pet(object):
                 admin_party=ADMIN_PARTY,
                 adapter=Replay429Adapter(retries=10, initialBackoff=0.01),
             )
-        except ConnectionError:
-            raise AssertionError("Cloudant service could not be reached")
+        except ConnectionError as error:
+            raise AssertionError("Cloudant service could not be reached") from error
 
         # Create database if it doesn't exist
         try:
-            Pet.database = Pet.client[dbname]
+            Pet.database = Pet.client[dbname]   # pylint: disable=unsubscriptable-object
         except KeyError:
             # Create a database using an initialized client
             Pet.database = Pet.client.create_database(dbname)
         # check for success
         if not Pet.database.exists():
-            raise AssertionError("Database [{}] could not be obtained".format(dbname))
+            raise AssertionError(f"Database [{dbname}] could not be obtained")

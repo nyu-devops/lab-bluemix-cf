@@ -17,7 +17,7 @@
 """
 Test Factory to make fake objects for testing
 """
-import uuid
+# import uuid
 import factory
 from factory.fuzzy import FuzzyChoice
 

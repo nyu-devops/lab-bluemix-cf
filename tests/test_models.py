@@ -22,11 +22,9 @@ nosetests -v --with-spec --spec-color
 
 nosetests --stop tests/test_pets.py:TestPets
 """
-import os
-import json
 import logging
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from requests import HTTPError, ConnectionError
 from service.models import Pet, Gender, DataValidationError
 from service import init_db
@@ -35,6 +33,7 @@ from tests.factories import PetFactory
 # This is for production testing
 # Comment this out when debugging
 logging.disable(logging.CRITICAL)
+
 
 ######################################################################
 #  T E S T   C A S E S
@@ -54,7 +53,7 @@ class TestPets(TestCase):
             pet = PetFactory()
             pet.create()
             pet_collection.append(pet)
-        return pet_collection        
+        return pet_collection
 
     def test_create_a_pet(self):
         """It should Create a pet and assert that has correct attributes"""
@@ -241,7 +240,7 @@ class TestPets(TestCase):
         self.assertEqual(pet.category, saved_pet.category)
         self.assertEqual(pet.available, saved_pet.available)
         self.assertEqual(pet.gender, saved_pet.gender)
-        
+
     def test_pet_not_found(self):
         """It should not find a Pet"""
         pet = Pet.find("foo")
@@ -266,7 +265,7 @@ class TestPets(TestCase):
         """It should Find a Pet by Category"""
         pets = self._create_pets(5)
         category = pets[0].category
-        category_count =  len([pet for pet in pets if pet.category == category])
+        category_count = len([pet for pet in pets if pet.category == category])
         logging.debug("Looking for %d Pets in category %s", category_count, category)
         found_pets = Pet.find_by_category(category)
         self.assertEqual(len(found_pets), category_count)
@@ -278,7 +277,9 @@ class TestPets(TestCase):
         pets = self._create_pets(5)
         available = pets[0].available
         available_count = len([pet for pet in pets if pet.available == available])
-        logging.debug("Looking for %d Pets where availabe is %s", available_count, available)
+        logging.debug(
+            "Looking for %d Pets where availabe is %s", available_count, available
+        )
         found_pets = Pet.find_by_availability(available)
         self.assertEqual(len(found_pets), available_count)
         for pet in found_pets:
@@ -288,7 +289,7 @@ class TestPets(TestCase):
         """It should Find a Pet by Gender"""
         pets = self._create_pets(5)
         gender = pets[0].gender
-        gender_count =  len([pet for pet in pets if pet.gender == gender])
+        gender_count = len([pet for pet in pets if pet.gender == gender])
         logging.debug("Looking for %d Pets where gender is %s", gender_count, gender)
         found_pets = Pet.find_by_gender(gender.name)
         self.assertEqual(len(found_pets), gender_count)
