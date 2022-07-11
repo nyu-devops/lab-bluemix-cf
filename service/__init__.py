@@ -23,7 +23,8 @@ and CouchDB database
 import sys
 import logging
 from flask import Flask
-from .models import Pet
+from service.models import Pet
+from service.utils import log_handlers
 
 # Create Flask application
 app = Flask(__name__)
@@ -32,28 +33,16 @@ app.config["LOGGING_LEVEL"] = logging.INFO
 
 # Import the routes After the Flask app is created
 # pylint: disable=wrong-import-position, cyclic-import
-from service import routes, models, error_handlers
+from service import routes, models
+from service.utils import error_handlers
 
 # Set up logging for production
-print(f"Setting up logging for {__name__}...")
-app.logger.propagate = False
-if __name__ != "__main__":
-    gunicorn_logger = logging.getLogger("gunicorn.error")
-    app.logger.handlers = gunicorn_logger.handlers
-    app.logger.setLevel(gunicorn_logger.level)
-    # Make all log formats consistent
-    formatter = logging.Formatter(
-        "[%(asctime)s] [%(levelname)s] [%(module)s] %(message)s", "%Y-%m-%d %H:%M:%S %z"
-    )
-    for handler in app.logger.handlers:
-        handler.setFormatter(formatter)
-    app.logger.info("Logging handler established")
+log_handlers.init_logging(app, "gunicorn.error")
 
 app.logger.info(70 * "*")
 app.logger.info("  P E T   S T O R E   S E R V I C E  ".center(70, "*"))
 app.logger.info(70 * "*")
 app.logger.info("Service initialized!")
-
 
 @app.before_first_request
 def init_db(dbname="pets"):

@@ -34,7 +34,8 @@ from unittest import TestCase
 from urllib.parse import quote_plus
 from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 
-from service import app, status
+from service import app
+from service.utils import status
 from service.models import Pet
 from tests.factories import PetFactory
 
