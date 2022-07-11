@@ -1,6 +1,0 @@
-# .coveragerc
-[run]
-source=app
-
-[report]
-show_missing = True

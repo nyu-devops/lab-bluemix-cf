@@ -3,27 +3,36 @@
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "app",
 	"workspaceFolder": "/app",
-	"remoteUser": "devops",
+	"remoteUser": "vscode",
 	"extensions": [
-		"VisualStudioExptTeam.vscodeintellicode",
+		"VisualVisualStudioExptTeam.vscodeintellicodeStudio",
 		"ms-python.python",
+		"ms-python.pylint",
 		"ms-python.vscode-pylance",
 		"alexkrechik.cucumberautocomplete",
-		"cstrap.flask-snippets",
+		"ms-azuretools.vscode-docker",
+		"njpwerner.autodocstring",
+    	"wholroyd.jinja",
 		"yzhang.markdown-all-in-one",
-		"bierner.github-markdown-preview",
 		"hnw.vscode-auto-open-markdown-preview",
-		"DavidAnson.vscode-markdownlint",
+        "bierner.markdown-preview-github-styles",
+        "davidanson.vscode-markdownlint",
 		"donjayamanne.githistory",
 		"GitHub.vscode-pull-request-github",
 		"hbenl.vscode-test-explorer",
 		"LittleFoxTeam.vscode-python-test-adapter",
-		"njpwerner.autodocstring",
 		"redhat.vscode-yaml",
-		"streetsidesoftware.code-spell-checker",
-		"wholroyd.jinja",
-		"bbenoist.vagrant"
+		"inercia.vscode-k3d",
+		"bbenoist.vagrant",
+		"streetsidesoftware.code-spell-checker"
 	],
-	// "forwardPorts": [8080]
-	"postCreateCommand": "bash scripts/linux-tools.sh"
+    "postCreateCommand": "sudo pip install -r requirements.txt; bash /app/scripts/install-tools.sh",
+	"features": {
+		"docker-in-docker": "latest",
+		"kubectl-helm-minikube": {
+			"version": "latest",
+			"helm": "latest",
+			"minikube": "none"
+		}
+	}
 }

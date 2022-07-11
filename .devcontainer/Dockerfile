@@ -2,13 +2,20 @@
 FROM python:3.9-slim
 
 # Add any tools that are needed beyond Python 3.9
+# Add any tools that are needed beyond Python 3.9
 RUN apt-get update && \
-    apt-get install -y sudo vim git zip tree curl wget jq && \
+    apt-get install -y sudo vim make git zip tree curl wget jq && \
     apt-get autoremove -y && \
     apt-get clean -y
 
+# Install K3D, Kustomize, & IBM Cloud CLI for Kubernetes
+RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | bash && \
+    curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash && \
+    install kustomize /usr/local/bin/kustomize && rm kustomize && \
+    curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
+
 # Create a user for development
-ARG USERNAME=devops
+ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
@@ -21,9 +28,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Set up the Python development environment
 WORKDIR /app
-COPY requirements.txt .
-RUN python -m pip install --upgrade pip wheel && \
-    pip install -r requirements.txt
+RUN python -m pip install --upgrade pip && \
+    pip install --upgrade wheel
 
 ENV PORT 8080
 EXPOSE $PORT
@@ -33,3 +39,7 @@ ENV TERM=xterm-256color
 
 # Become a regular user
 USER $USERNAME
+
+# Install user mode tools
+RUN ibmcloud plugin install container-service -r 'IBM Cloud' && \
+    ibmcloud plugin install container-registry -r 'IBM Cloud'
