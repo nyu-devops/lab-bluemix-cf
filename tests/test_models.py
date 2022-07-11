@@ -57,7 +57,7 @@ class TestPets(TestCase):
         return pet_collection        
 
     def test_create_a_pet(self):
-        """Create a pet and assert that has correct attributes"""
+        """It should Create a pet and assert that has correct attributes"""
         pet = Pet(name="Fido", category="dog", available=True, gender=Gender.MALE)
         self.assertTrue(pet is not None)
         self.assertEqual(pet.id, None)
@@ -70,7 +70,7 @@ class TestPets(TestCase):
         self.assertEqual(pet.gender, Gender.FEMALE)
 
     def test_add_a_pet(self):
-        """Create a pet and add it to the database"""
+        """It should Create a pet and add it to the database"""
         pets = Pet.all()
         self.assertEqual(pets, [])
         pet = PetFactory()
@@ -88,12 +88,12 @@ class TestPets(TestCase):
         self.assertEqual(pets[0].gender, pet.gender)
 
     def test_create_a_pet_with_no_name(self):
-        """Create a Pet with no name"""
+        """It should not Create a Pet with no name"""
         pet = Pet(None, "cat")
         self.assertRaises(DataValidationError, pet.create)
 
     def test_read_a_pet(self):
-        """Read a Pet"""
+        """It should Read a Pet"""
         pet = PetFactory()
         logging.debug(pet)
         pet.create()
@@ -106,7 +106,7 @@ class TestPets(TestCase):
         self.assertEqual(found_pet.gender, pet.gender)
 
     def test_update_a_pet(self):
-        """Update a Pet"""
+        """It should Update a Pet"""
         pet = PetFactory()
         logging.debug(pet)
         pet.create()
@@ -126,7 +126,7 @@ class TestPets(TestCase):
         self.assertEqual(pets[0].category, "k9")
 
     def test_delete_a_pet(self):
-        """Delete a Pet"""
+        """It should Delete a Pet"""
         pet = PetFactory()
         pet.create()
         self.assertEqual(len(Pet.all()), 1)
@@ -135,7 +135,7 @@ class TestPets(TestCase):
         self.assertEqual(len(Pet.all()), 0)
 
     def test_list_all_pets(self):
-        """List Pets in the database"""
+        """It should List Pets in the database"""
         pets = Pet.all()
         self.assertEqual(pets, [])
         # Create 5 Pets
@@ -147,7 +147,7 @@ class TestPets(TestCase):
         self.assertEqual(len(pets), 5)
 
     def test_serialize_a_pet(self):
-        """Test serialization of a Pet"""
+        """It should serialize a Pet"""
         pet = PetFactory()
         data = pet.serialize()
         self.assertNotEqual(data, None)
@@ -161,7 +161,7 @@ class TestPets(TestCase):
         self.assertEqual(data["gender"], pet.gender.name)
 
     def test_deserialize_a_pet(self):
-        """Test deserialization of a Pet"""
+        """It should deserialize a Pet"""
         data = {
             "name": "Kitty",
             "category": "cat",
@@ -178,43 +178,43 @@ class TestPets(TestCase):
         self.assertEqual(pet.gender, Gender.FEMALE)
 
     def test_deserialize_missing_data(self):
-        """Test deserialization of a Pet with missing data"""
+        """It should not deserialize a Pet with missing data"""
         data = {"name": "Kitty", "category": "cat"}
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
     def test_deserialize_with_no_data(self):
-        """Deserialize a Pet that has no data"""
+        """It should not deserialize a Pet that has no data"""
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, None)
 
     def test_deserialize_with_no_name(self):
-        """Deserialize a Pet that has no name"""
+        """It should not deserialize a Pet that has no name"""
         data = {"category": "cat"}
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
     def test_deserialize_with_no_gender(self):
-        """Deserialize a Pet with no gender data"""
+        """It should not deserialize a Pet with no gender data"""
         data = {"name": "fido", "category": "dog", "available": True}
         pet = Pet()
         pet.deserialize(data)
         self.assertEqual(pet.gender, Gender.UNKNOWN)
 
     def test_deserialize_with_bad_gender(self):
-        """Deserialize a Pet with bad gender data"""
+        """It should not deserialize a Pet with bad gender data"""
         data = {"name": "fido", "category": "dog", "available": True, "gender": "foo"}
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
     def test_deserialize_bad_data(self):
-        """Test deserialization of bad data"""
+        """It should not deserialize bad data"""
         data = "this is not a dictionary"
         pet = Pet()
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
     def test_deserialize_bad_available(self):
-        """Test deserialization of bad available attribute"""
+        """It should not deserialize bad available attribute"""
         test_pet = PetFactory()
         data = test_pet.serialize()
         data["available"] = "true"
@@ -222,7 +222,7 @@ class TestPets(TestCase):
         self.assertRaises(DataValidationError, pet.deserialize, data)
 
     def test_deserialize_lower_case_gender(self):
-        """Test deserialization with lower case gender"""
+        """It should not deserialize with lower case gender"""
         test_pet = PetFactory()
         data = test_pet.serialize()
         data["gender"] = "male"  # lower case
@@ -231,7 +231,7 @@ class TestPets(TestCase):
         self.assertEqual(pet.gender, Gender.MALE)
 
     def test_find_pet(self):
-        """Find a Pet by id"""
+        """It should Find a Pet by id"""
         pets = self._create_pets(5)
         saved_pet = pets[0]
         pet = Pet.find(saved_pet.id)
@@ -243,12 +243,12 @@ class TestPets(TestCase):
         self.assertEqual(pet.gender, saved_pet.gender)
         
     def test_pet_not_found(self):
-        """Pet not found"""
+        """It should not find a Pet"""
         pet = Pet.find("foo")
         self.assertIsNone(pet)
 
     def test_find_by_name(self):
-        """Find a Pet by Name"""
+        """It should Find a Pet by Name"""
         self._create_pets(5)
         saved_pet = PetFactory()
         saved_pet.name = "Rumpelstiltskin"
@@ -263,7 +263,7 @@ class TestPets(TestCase):
         self.assertEqual(pet.gender, saved_pet.gender)
 
     def test_find_by_category(self):
-        """Find a Pet by Category"""
+        """It should Find a Pet by Category"""
         pets = self._create_pets(5)
         category = pets[0].category
         category_count =  len([pet for pet in pets if pet.category == category])
@@ -274,7 +274,7 @@ class TestPets(TestCase):
             self.assertEqual(pet.category, category)
 
     def test_find_by_availability(self):
-        """Find a Pet by Availability"""
+        """It should Find a Pet by Availability"""
         pets = self._create_pets(5)
         available = pets[0].available
         available_count = len([pet for pet in pets if pet.available == available])
@@ -285,7 +285,7 @@ class TestPets(TestCase):
             self.assertEqual(pet.available, available)
 
     def test_find_by_gender(self):
-        """Find a Pet by Gender"""
+        """It should Find a Pet by Gender"""
         pets = self._create_pets(5)
         gender = pets[0].gender
         gender_count =  len([pet for pet in pets if pet.gender == gender])
@@ -296,7 +296,7 @@ class TestPets(TestCase):
             self.assertEqual(pet.gender, gender)
 
     def test_create_query_index(self):
-        """Test create query index"""
+        """It should create a query index"""
         Pet("fido", "dog", False).create()
         Pet("kitty", "cat", True).create()
         Pet.create_query_index("category")
@@ -306,13 +306,13 @@ class TestPets(TestCase):
     ######################################################################
 
     def test_disconnect(self):
-        """Test Disconnet"""
+        """It should Disconnect"""
         Pet.disconnect()
         pet = Pet("fido", "dog", False)
         self.assertRaises(AttributeError, pet.create)
 
     def test_connect(self):
-        """Test Connect"""
+        """It should Connect"""
         Pet.disconnect()
         Pet.connect()
         pet = Pet("fido", "dog", False)
@@ -320,7 +320,7 @@ class TestPets(TestCase):
 
     @patch("cloudant.database.CloudantDatabase.create_document")
     def test_http_error(self, bad_mock):
-        """Test a Bad Create with HTTP error"""
+        """It should not Create with HTTP error"""
         bad_mock.side_effect = HTTPError()
         pet = Pet("fido", "dog", False)
         pet.create()
@@ -328,7 +328,7 @@ class TestPets(TestCase):
 
     @patch("cloudant.document.Document.exists")
     def test_document_not_exist(self, bad_mock):
-        """Test a Bad Document Exists"""
+        """It should not create if a Bad Document Exists"""
         bad_mock.return_value = False
         pet = Pet("fido", "dog", False)
         pet.create()
@@ -336,7 +336,7 @@ class TestPets(TestCase):
 
     @patch("cloudant.database.CloudantDatabase.__getitem__")
     def test_key_error_on_update(self, bad_mock):
-        """Test KeyError on update"""
+        """It should cause KeyError on update"""
         bad_mock.side_effect = KeyError()
         pet = Pet("fido", "dog", False)
         pet.create()
@@ -346,7 +346,7 @@ class TestPets(TestCase):
 
     @patch("cloudant.database.CloudantDatabase.__getitem__")
     def test_key_error_on_delete(self, bad_mock):
-        """Test KeyError on delete"""
+        """It should cause KeyError on delete"""
         bad_mock.side_effect = KeyError()
         pet = Pet("fido", "dog", False)
         pet.create()
@@ -354,7 +354,7 @@ class TestPets(TestCase):
 
     @patch("cloudant.client.Cloudant.__init__")
     def test_connection_error(self, bad_mock):
-        """Test Connection error handler"""
+        """It should call Connection error handler"""
         bad_mock.side_effect = ConnectionError()
         self.assertRaises(AssertionError, Pet.init_db, "test")
 
