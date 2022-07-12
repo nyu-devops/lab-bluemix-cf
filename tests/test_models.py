@@ -76,7 +76,7 @@ class TestPetModel(unittest.TestCase):
     def test_create_a_pet(self):
         """It should Create a pet and assert that it exists"""
         pet = Pet(name="Fido", category="dog", available=True, gender=Gender.MALE)
-        self.assertEqual(str(pet), "<Pet 'Fido' id=[None]>")
+        self.assertEqual(str(pet), "<Pet Fido id=[None]>")
         self.assertTrue(pet is not None)
         self.assertEqual(pet.id, None)
         self.assertEqual(pet.name, "Fido")
@@ -256,8 +256,9 @@ class TestPetModel(unittest.TestCase):
         for pet in pets:
             pet.create()
         name = pets[0].name
+        count = len([p for p in pets if p.name == name])
         found = Pet.find_by_name(name)
-        self.assertEqual(found.count(), 1)
+        self.assertEqual(found.count(), count)
         self.assertEqual(found[0].category, pets[0].category)
         self.assertEqual(found[0].name, pets[0].name)
         self.assertEqual(found[0].available, pets[0].available)
