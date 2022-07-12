@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# pylint: disable=cyclic-import
 """
 Pet Store Service
 
@@ -28,6 +29,15 @@ from flask import jsonify, request, url_for, abort
 from service.models import Pet, Gender
 from service.utils import status  # HTTP Status Codes
 from . import app  # Import Flask application
+
+
+############################################################
+# Health Endpoint
+############################################################
+@app.route("/health")
+def health():
+    """Health Status"""
+    return jsonify(dict(status="OK")), status.HTTP_200_OK
 
 
 ######################################################################

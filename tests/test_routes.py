@@ -32,7 +32,7 @@ import unittest
 
 # from unittest.mock import MagicMock, patch
 from urllib.parse import quote_plus
-from werkzeug.datastructures import MultiDict, ImmutableMultiDict
+# from werkzeug.datastructures import MultiDict, ImmutableMultiDict
 from service import app
 from service.utils import status
 from service.models import db, init_db, Pet
@@ -103,13 +103,20 @@ class TestPetService(unittest.TestCase):
 
     def test_index(self):
         """It should see the Home Page"""
-        resp = self.client.get("/")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertIn(b"Pet Demo REST API Service", resp.data)
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(b"Pet Demo REST API Service", response.data)
 
-    #--------------------------------------------------
+    def test_health(self):
+        """It should be healthy"""
+        response = self.client.get("/health")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["status"], "OK")
+
+    # --------------------------------------------------
     # T E S T   L I S T
-    #--------------------------------------------------
+    # --------------------------------------------------
 
     def test_get_pet_list(self):
         """It should Get a list of Pets"""
@@ -119,9 +126,9 @@ class TestPetService(unittest.TestCase):
         data = response.get_json()
         self.assertEqual(len(data), 5)
 
-    #--------------------------------------------------
+    # --------------------------------------------------
     # T E S T   R E A D
-    #--------------------------------------------------
+    # --------------------------------------------------
 
     def test_get_pet(self):
         """It should Get a single Pet"""
@@ -140,9 +147,9 @@ class TestPetService(unittest.TestCase):
         logging.debug("Response data = %s", data)
         self.assertIn("was not found", data["message"])
 
-    #--------------------------------------------------
+    # --------------------------------------------------
     # T E S T   C R E A T E
-    #--------------------------------------------------
+    # --------------------------------------------------
 
     def test_create_pet(self):
         """It should Create a new Pet"""
@@ -225,9 +232,9 @@ class TestPetService(unittest.TestCase):
         response = self.client.post(BASE_URL, json=test_pet)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    #--------------------------------------------------
+    # --------------------------------------------------
     # T E S T   U P D A T E
-    #--------------------------------------------------
+    # --------------------------------------------------
 
     def test_update_pet(self):
         """It should Update an existing Pet"""
@@ -260,9 +267,9 @@ class TestPetService(unittest.TestCase):
         resp = self.client.put(f"{BASE_URL}/0", data={}, content_type="text/html")
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    #--------------------------------------------------
+    # --------------------------------------------------
     # T E S T   D E L E T E
-    #--------------------------------------------------
+    # --------------------------------------------------
 
     def test_delete_pet(self):
         """It should Delete a Pet"""
