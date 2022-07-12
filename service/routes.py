@@ -134,10 +134,8 @@ def create_pets():
             "available": request.form["available"].lower()
             in ["yes", "y", "true", "t", "1"],
             "gender": request.form["gender"],
+            "birthday": request.form["birthday"],
         }
-        app.logger.info(
-            "Available: %s = %s", request.form["available"], data["available"]
-        )
     elif content_type == "application/json":
         app.logger.info("Processing JSON data")
         data = request.get_json()

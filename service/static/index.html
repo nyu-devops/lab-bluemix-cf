@@ -5,73 +5,114 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="static/stylesheets/style.css">
+    <link rel="stylesheet" href="static/css/blue_bootstrap.min.css">
   </head>
   <body>
-      <table>
-		<tr>
-            <td style= "width:30%;">
-              <img class = "newappIcon" src="static/images/newapp-icon.png" alt="application icon">
-            </td>
-			<td>
-        <h1 id = "message">Pet Demo REST API Service</h1>
-        <p class='description'>
-				GET <a href="/pets" id = "get_pets">/pets</a> to see all the pets.
-				<br><br>
-                GET <a href="/pets?category=dog">/pets?category=dog</a> to see all of the pets in the 'dog' category.
-				<br><br>
-				GET /pets/{id} retrieves a pet from the DB using an ID.
-				<br><br>
-				PUT /pets/{id} updates a pet using an ID.
-				<br><br>
-				DELETE /pets/{id} removes a pet from the DB using an ID.
-				<br><br>
-				POST /pets creates an new pet.
-                <p>Example Data:</p>
-                <pre>
-    {
-        "name": "bowser",
-        "category": "dog",
-        "gender": "MALE",
-        "available": "True"
-    }
-                </pre>
-                Try it now:
-                <form id="create_pets" action="/pets" method="post" enctype="application/json">
-                  <!-- NAME -->
-                  <div>
-                    <label for="name">What is the name of the pet?</label>
-                    <input name="name" id="name" value="Bowser">
-                  </div>
-                  <!-- CATEGORY -->
-                  <div>
-                    <label for="category">What category of pet?</label>
-                    <input name="category" id="category" value="dog">
-                  </div>
-                  <!-- GENDER -->
-                  <div>
-                    <label for="gender">What gender is the pet?</label>
-                    <select name="gender" id="gender">
-                      <option value="UNKNOWN">Unknown</option>
-                      <option value="MALE">Male</option>
-                      <option value="FEMALE">Female</option>
-                    </select>
-                  </div>
-                  <!-- AVAILABLE -->
-                  <div>
-                    <label for="available">Available for adoption:</label>
-                    <select name="available" id="available">
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  </div>
-                  <!-- SUBMIT -->
-                  <div>
-                    <button id="submit">Create Pet</button>
-                  </div>
-                </form>
-			</td>
-		</tr>
-	</table>
+    <div class="container">
+      <div class="page-header">
+          <h1>Pet Demo REST API Service</h1>
+      </div>
+
+      <div class="row">
+        <div class="column col-md-10">
+          <p class='description'>
+            GET <a href="/pets" id = "get_pets">/pets</a> to see all the pets.
+            <br>
+            GET <a href="/pets?category=dog">/pets?category=dog</a> to see all of the pets in the 'dog' category.
+            <br>
+            GET /pets/{id} retrieves a pet from the DB using an ID.
+            <br>
+            PUT /pets/{id} updates a pet using an ID.
+            <br>
+            DELETE /pets/{id} removes a pet from the DB using an ID.
+            <br>
+            POST /pets creates an new pet.
+          </p>
+        </div>
+        <div class="column col-md-2">
+          <img src="static/images/newapp-icon.png" alt="Pet Shop" width="150" height="150">
+          <!-- <img src="static/images/pet-shop.png" alt="Pet Shop" height="150"> -->
+        </div>
+      </div>
+      <p>Example JSON Data:</p>
+      <pre>{"name": "Bowser", "category": "Dog", "gender": "MALE", "available": "True", "birthday": "2022-05-11"}</pre>
+
+      <!-- FORM -->
+      <form id="create_pets" action="/pets" method="post" enctype="application/json">      
+      <div class="col-md-12" id="form_data">
+        <h3>Enter information to Create a Pet:</h3>
+        <div class="well">
+
+          <div class="form-horizontal">
+
+            <!-- NAME -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="name">Name:</label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" name="name" id="name" placeholder="Enter name for Pet">
+              </div>
+            </div>
+
+            <!-- CATEGORY -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="category">Category:</label>
+              <div class="col-sm-10">
+                <input type="text" class="form-control" name="category" id="category" placeholder="Enter category for Pet">
+              </div>
+            </div>
+
+            <!-- AVAILABLE -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="available">Available:</label>
+              <div class="col-sm-10">
+                <select class="form-control" name="available" id="available">
+                  <option value="true" selected>True</option>
+                  <option value="false">False</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- GENDER -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="gender">Gender:</label>
+              <div class="col-sm-10">
+                <select class="form-control" name="gender" id="gender">
+                  <option value="UNKNOWN" selected>Unknown</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- BIRTHDAY -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="birthday">Birthday:</label>
+              <div class="col-sm-10">
+                <input type="date" class="form-control" name="birthday" id="birthday" placeholder="2020-04-01">
+              </div>
+            </div>
+
+
+            <!-- SUBMIT BUTTONS -->
+            <div class="form-group">
+              <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-success" id="submit">Create</button>
+              </div>
+            </div>
+
+          </div> <!-- form horizontal -->
+        </div> <!-- end well -->
+      </div> <!-- end Form -->
+      </form>
+
+      <footer>
+        <br><br>
+        <p>&copy; NYU DevOps Company 2022</p>
+      </footer>
+
+    </div> <!-- container -->
+
+  <script type="text/javascript" src = "static/js/bootstrap.min.js"></script>
+
   </body>
 </html>
