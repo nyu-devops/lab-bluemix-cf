@@ -1,18 +1,16 @@
-######################################################################
-# Copyright 2016, 2022 John Rofrano. All Rights Reserved.
+# Copyright 2016, 2022 John J. Rofrano. All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the 'License');
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 # https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
+# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-######################################################################
 
 """
 Pet Store Service
@@ -26,10 +24,10 @@ PUT /pets/{id} - updates a Pet record in the database
 DELETE /pets/{id} - deletes a Pet record in the database
 """
 
-from flask import jsonify, request, url_for, make_response, abort
-from service import app  # Import Flask application
-from service.models import Pet
+from flask import jsonify, request, url_for, abort
+from service.models import Pet, Gender
 from service.utils import status  # HTTP Status Codes
+from . import app  # Import Flask application
 
 
 ######################################################################
@@ -49,13 +47,12 @@ def index():
 def list_pets():
     """Returns all of the Pets"""
     app.logger.info("Request for pet list")
-
     pets = []
 
     category = request.args.get("category")
     name = request.args.get("name")
     available = request.args.get("available")
-    gender = request.args.get("gender")
+    gender_name = request.args.get("gender")
 
     if category:
         app.logger.info("Filtering by category: %s", category)
@@ -67,21 +64,22 @@ def list_pets():
         app.logger.info("Filtering by available: %s", available)
         is_available = available.lower() in ["yes", "y", "true", "t", "1"]
         pets = Pet.find_by_availability(is_available)
-    elif gender:
-        app.logger.info("Filtering by gender: %s", gender)
+    elif gender_name:
+        app.logger.info("Filtering by gender: %s", gender_name)
+        gender = getattr(Gender, gender_name)  # create enum from string
         pets = Pet.find_by_gender(gender)
     else:
         pets = Pet.all()
 
     results = [pet.serialize() for pet in pets]
     app.logger.info("Returning %d pets", len(results))
-    return make_response(jsonify(results), status.HTTP_200_OK)
+    return jsonify(results), status.HTTP_200_OK
 
 
 ######################################################################
 # RETRIEVE A PET
 ######################################################################
-@app.route("/pets/<pet_id>", methods=["GET"])
+@app.route("/pets/<int:pet_id>", methods=["GET"])
 def get_pets(pet_id):
     """
     Retrieve a single Pet
@@ -90,7 +88,6 @@ def get_pets(pet_id):
     """
     app.logger.info("Request for pet with id: %s", pet_id)
     pet = Pet.find(pet_id)
-
     if not pet:
         abort(status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found.")
 
@@ -154,14 +151,14 @@ def create_pets():
 ######################################################################
 # UPDATE AN EXISTING PET
 ######################################################################
-@app.route("/pets/<pet_id>", methods=["PUT"])
+@app.route("/pets/<int:pet_id>", methods=["PUT"])
 def update_pets(pet_id):
     """
     Update a Pet
 
     This endpoint will update a Pet based the body that is posted
     """
-    app.logger.info("Request to Update pet with id: %s", pet_id)
+    app.logger.info("Request to update pet with id: %s", pet_id)
     check_content_type("application/json")
 
     pet = Pet.find(pet_id)
@@ -179,20 +176,20 @@ def update_pets(pet_id):
 ######################################################################
 # DELETE A PET
 ######################################################################
-@app.route("/pets/<pet_id>", methods=["DELETE"])
+@app.route("/pets/<int:pet_id>", methods=["DELETE"])
 def delete_pets(pet_id):
     """
     Delete a Pet
 
     This endpoint will delete a Pet based the id specified in the path
     """
-    app.logger.info("Request to Delete pet with id: %s", pet_id)
+    app.logger.info("Request to delete pet with id: %s", pet_id)
     pet = Pet.find(pet_id)
     if pet:
         pet.delete()
 
     app.logger.info("Pet with ID [%s] delete complete.", pet_id)
-    return make_response("", status.HTTP_204_NO_CONTENT)
+    return "", status.HTTP_204_NO_CONTENT
 
 
 ######################################################################

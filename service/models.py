@@ -1,4 +1,3 @@
-######################################################################
 # Copyright 2016, 2022 John Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
@@ -12,54 +11,42 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-######################################################################
 
 """
-Pet Model that uses Cloudant
+Models for Pet Demo Service
 
-You must initialize this class before use by calling initialize().
-This class looks for an environment variable called VCAP_SERVICES
-to get it's database credentials from. If it cannot find one, it
-tries to connect to Cloudant on the localhost. If that fails it looks
-for a server name 'cloudant' to connect to.
+All of the models are stored in this module
 
-To use with Docker couchdb database use:
-    docker run -d --name couchdb -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=pass couchdb
+Models
+------
+Pet - A Pet used in the Pet Store
 
-Docker Note:
-    CouchDB uses /opt/couchdb/data to store its data, and is exposed as a volume
-    e.g., to use current folder add: -v $(pwd):/opt/couchdb/data
-    You can also use Docker volumes like this: -v couchdb_data:/opt/couchdb/data
+Attributes:
+-----------
+name (string) - the name of the pet
+category (string) - the category the pet belongs to (i.e., dog, cat)
+available (boolean) - True for pets that are available for adoption
+
 """
-
-import os
-import sys
-import json
 import logging
 from enum import Enum
-from retry import retry
-from cloudant.client import Cloudant
-from cloudant.query import Query
-from cloudant.database import CloudantDatabase
-from cloudant.adapters import Replay429Adapter
-from requests import HTTPError, ConnectionError  # pylint: disable=redefined-builtin
+from datetime import date
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
 logger = logging.getLogger("flask.app")
 
-# get configuration from environment (12-factor)
-ADMIN_PARTY = os.environ.get("ADMIN_PARTY", "False").lower() == "true"
-COUCHDB_HOST = os.environ.get("COUCHDB_HOST", "localhost")
-COUCHDB_USERNAME = os.environ.get("COUCHDB_USERNAME", "admin")
-COUCHDB_PASSWORD = os.environ.get("COUCHDB_PASSWORD", "pass")
+# Create the SQLAlchemy object to be initialized later in init_db()
+db = SQLAlchemy()
 
-# global variables for retry (must be int)
-RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 10))
-RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
-RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
+
+def init_db(app):
+    """Initialize the SQLAlchemy app"""
+    Pet.init_db(app)
 
 
 class DataValidationError(Exception):
-    """Custom Exception with data validation fails"""
+    """Used for an data validation errors when deserializing"""
 
 
 class Gender(Enum):
@@ -70,108 +57,78 @@ class Gender(Enum):
     UNKNOWN = 3
 
 
-class Pet():
-    """Pet interface to database"""
+class Pet(db.Model):
+    """
+    Class that represents a Pet
 
-    logger = logging.getLogger(__name__)
-    client: Cloudant = None
-    database: CloudantDatabase = None
+    This version uses a relational database for persistence which is hidden
+    from us by SQLAlchemy's object relational mappings (ORM)
+    """
 
-    def __init__(
-        self,
-        name: str = None,
-        category: str = None,
-        available: bool = True,
-        gender: Gender = Gender.UNKNOWN
-    ):
-        """Constructor"""
-        self.id = None      # pylint: disable=C0103
-        self.name = name
-        self.category = category
-        self.available = available
-        self.gender = gender
-
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
+    ##################################################
+    # Table Schema
+    ##################################################
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(63), nullable=False)
+    category = db.Column(db.String(63), nullable=False)
+    available = db.Column(db.Boolean(), nullable=False, default=False)
+    gender = db.Column(
+        db.Enum(Gender), nullable=False, server_default=(Gender.UNKNOWN.name)
     )
-    def create(self) -> None:
+    birthday = db.Column(db.Date(), nullable=False, default=date.today())
+
+    ##################################################
+    # INSTANCE METHODS
+    ##################################################
+
+    def __repr__(self):
+        return "<Pet %r id=[%s]>" % (self.name, self.id)
+
+    def create(self):
         """
-        Creates a new Pet in the database
+        Creates a Pet to the database
         """
-        if self.name is None:  # name is the only required field
-            raise DataValidationError("name attribute is not set")
+        logger.info("Creating %s", self.name)
+        # id must be none to generate next primary key
+        self.id = None  # pylint: disable=invalid-name
+        db.session.add(self)
+        db.session.commit()
 
-        try:
-            document = self.database.create_document(self.serialize())
-        except HTTPError as err:
-            Pet.logger.warning("Create failed: %s", err)
-            return
+    def update(self):
+        """
+        Updates a Pet to the database
+        """
+        logger.info("Saving %s", self.name)
+        if not self.id:
+            raise DataValidationError("Update called with empty ID field")
+        db.session.commit()
 
-        if document.exists():
-            self.id = document["_id"]
-
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def update(self) -> None:
-        """Updates a Pet in the database"""
-        try:
-            document = self.database[self.id]   # pylint: disable=unsubscriptable-object
-        except KeyError:
-            document = None
-        if document:
-            document.update(self.serialize())
-            document.save()
-
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def delete(self) -> None:
-        """Deletes a Pet from the database"""
-        try:
-            document = self.database[self.id]   # pylint: disable=unsubscriptable-object
-        except KeyError:
-            document = None
-        if document:
-            document.delete()
+    def delete(self):
+        """Removes a Pet from the data store"""
+        logger.info("Deleting %s", self.name)
+        db.session.delete(self)
+        db.session.commit()
 
     def serialize(self) -> dict:
-        """serializes a Pet into a dictionary"""
-        pet = {
+        """Serializes a Pet into a dictionary"""
+        return {
+            "id": self.id,
             "name": self.name,
             "category": self.category,
             "available": self.available,
             "gender": self.gender.name,  # convert enum to string
+            "birthday": self.birthday.isoformat()
         }
-        if self.id:
-            pet["_id"] = self.id
-        return pet
 
-    def deserialize(self, data: dict) -> None:
-        """deserializes a Pet my marshalling the data.
-
-        :param data: a Python dictionary representing a Pet.
+    def deserialize(self, data: dict):
         """
-
-        Pet.logger.info(data)
+        Deserializes a Pet from a dictionary
+        Args:
+            data (dict): A dictionary containing the Pet data
+        """
         try:
-            # process mandatory fields
             self.name = data["name"]
             self.category = data["category"]
-
-            # make sure available is a boolean
             if isinstance(data["available"], bool):
                 self.available = data["available"]
             else:
@@ -179,120 +136,44 @@ class Pet():
                     "Invalid type for boolean [available]: "
                     + str(type(data["available"]))
                 )
-
-            # gender is optional and defaults to unknown
-            gender = data.get("gender")
-            if gender:
-                self.gender = getattr(
-                    Gender, data["gender"].upper()
-                )  # create enum from string
-            else:
-                self.gender = Gender.UNKNOWN
-
+            self.gender = getattr(Gender, data["gender"])  # create enum from string
+            self.birthday = date.fromisoformat(data["birthday"])
         except AttributeError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
+            raise DataValidationError("Invalid attribute: " + error.args[0])
         except KeyError as error:
-            raise DataValidationError("Invalid pet: missing " + error.args[0]) from error
+            raise DataValidationError("Invalid pet: missing " + error.args[0])
         except TypeError as error:
             raise DataValidationError(
-                "Invalid pet: body of request contained bad or no data" + error.args[0]
-            ) from error
-
-        # if there is no id and the data has one, assign it
-        if not self.id and "_id" in data:
-            self.id = data["_id"]
-
+                "Invalid pet: body of request contained bad or no data " + str(error)
+            )
         return self
 
-    ######################################################################
-    #  S T A T I C   D A T A B A S E   M E T H O D S
-    ######################################################################
+    ##################################################
+    # CLASS METHODS
+    ##################################################
 
     @classmethod
-    def connect(cls) -> None:
-        """Connect to the server"""
-        cls.client.connect()
+    def init_db(cls, app: Flask):
+        """Initializes the database session
+
+        :param app: the Flask app
+        :type data: Flask
+
+        """
+        logger.info("Initializing database")
+        # This is where we initialize SQLAlchemy from the Flask app
+        db.init_app(app)
+        app.app_context().push()
+        db.create_all()  # make our sqlalchemy tables
 
     @classmethod
-    def disconnect(cls) -> None:
-        """Disconnect from the server"""
-        cls.client.disconnect()
-
-    @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def create_query_index(cls, field_name, order="asc") -> None:
-        """Creates a new query index for searching"""
-        cls.database.create_query_index(
-            index_name=field_name, fields=[{field_name: order}]
-        )
-
-    @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def remove_all(cls) -> None:
-        """Removes all documents from the database (use for testing)"""
-        for document in cls.database:   # pylint: disable=not-an-iterable
-            document.delete()
-
-    @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
     def all(cls) -> list:
-        """Query that returns all Pets"""
-        results = []
-        for doc in cls.database:   # pylint: disable=not-an-iterable
-            pet = Pet().deserialize(doc)
-            pet.id = doc["_id"]
-            results.append(pet)
-        return results
-
-    ######################################################################
-    #  F I N D E R   M E T H O D S
-    ######################################################################
+        """Returns all of the Pets in the database"""
+        logger.info("Processing all Pets")
+        return cls.query.all()
 
     @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def find_by(cls, **kwargs) -> list:
-        """Find records using selector"""
-        query = Query(cls.database, selector=kwargs)
-        results = []
-        for doc in query.result:
-            pet = Pet()
-            pet.deserialize(doc)
-            results.append(pet)
-        return results
-
-    @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def find(cls, pet_id: str) -> list:
+    def find(cls, pet_id: int):
         """Finds a Pet by it's ID
 
         :param pet_id: the id of the Pet to find
@@ -303,20 +184,23 @@ class Pet():
 
         """
         logger.info("Processing lookup for id %s ...", pet_id)
-        try:
-            document = cls.database[pet_id]  # pylint: disable=unsubscriptable-object)
-            return Pet().deserialize(document)
-        except KeyError:
-            return None
+        return cls.query.get(pet_id)
 
     @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
+    def find_or_404(cls, pet_id: int):
+        """Find a Pet by it's id
+
+        :param pet_id: the id of the Pet to find
+        :type pet_id: int
+
+        :return: an instance with the pet_id, or 404_NOT_FOUND if not found
+        :rtype: Pet
+
+        """
+        logger.info("Processing lookup or 404 for id %s ...", pet_id)
+        return cls.query.get_or_404(pet_id)
+
+    @classmethod
     def find_by_name(cls, name: str) -> list:
         """Returns all Pets with the given name
 
@@ -328,16 +212,9 @@ class Pet():
 
         """
         logger.info("Processing name query for %s ...", name)
-        return cls.find_by(name=name)
+        return cls.query.filter(cls.name == name)
 
     @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
     def find_by_category(cls, category: str) -> list:
         """Returns all of the Pets in a category
 
@@ -349,16 +226,9 @@ class Pet():
 
         """
         logger.info("Processing category query for %s ...", category)
-        return cls.find_by(category=category)
+        return cls.query.filter(cls.category == category)
 
     @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
     def find_by_availability(cls, available: bool = True) -> list:
         """Returns all Pets by their availability
 
@@ -370,107 +240,18 @@ class Pet():
 
         """
         logger.info("Processing available query for %s ...", available)
-        return cls.find_by(available=available)
+        return cls.query.filter(cls.available == available)
 
     @classmethod
-    @retry(
-        HTTPError,
-        delay=RETRY_DELAY,
-        backoff=RETRY_BACKOFF,
-        tries=RETRY_COUNT,
-        logger=logger,
-    )
-    def find_by_gender(cls, gender: str) -> list:
+    def find_by_gender(cls, gender: Gender = Gender.UNKNOWN) -> list:
         """Returns all Pets by their Gender
 
         :param gender: values are ['MALE', 'FEMALE', 'UNKNOWN']
-        :type gender: str
+        :type available: enum
 
-        :return: a collection of Pets that match the gender
+        :return: a collection of Pets that are available
         :rtype: list
 
         """
-        logger.info("Processing gender query for %s ...", gender.upper())
-        return cls.find_by(gender=gender.upper())
-
-    ############################################################
-    #  C L O U D A N T   D A T A B A S E   C O N N E C T I O N
-    ############################################################
-
-    @staticmethod
-    def get_vcap_services():
-        """Gets VCAP_SERVICES from environment"""
-        vcap_services = {}
-
-        # Try and get VCAP from the environment or a file if developing
-        if "VCAP_SERVICES" in os.environ:
-            Pet.logger.info("Running in Cloud Foundry mode.")
-            vcap_services = json.loads(os.environ["VCAP_SERVICES"])
-        # if VCAP_SERVICES isn't found, maybe we are running on Kubernetes?
-        elif "BINDING_CLOUDANT" in os.environ:
-            Pet.logger.info("Found Kubernetes Bindings")
-            creds = json.loads(os.environ["BINDING_CLOUDANT"])
-            vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
-        else:
-            Pet.logger.info("VCAP_SERVICES and BINDING_CLOUDANT undefined.")
-            creds = {
-                "username": COUCHDB_USERNAME,
-                "password": COUCHDB_PASSWORD,
-                "host": COUCHDB_HOST,
-                "port": 5984,
-                "url": "http://" + COUCHDB_HOST + ":5984/",
-            }
-            vcap_services = {"cloudantNoSQLDB": [{"credentials": creds}]}
-
-        return vcap_services
-
-    @staticmethod
-    def init_db(dbname: str = "pets") -> None:
-        """
-        Initialized Cloudant database connection
-        """
-        opts = {}
-        vcap_services = Pet.get_vcap_services()
-
-        # Look for Cloudant in VCAP_SERVICES
-        for service in vcap_services:
-            if service.startswith("cloudantNoSQLDB"):
-                cloudant_service = vcap_services[service][0]
-                opts["username"] = cloudant_service["credentials"]["username"]
-                opts["password"] = cloudant_service["credentials"]["password"]
-                opts["host"] = cloudant_service["credentials"]["host"]
-                opts["port"] = cloudant_service["credentials"]["port"]
-                opts["url"] = cloudant_service["credentials"]["url"]
-
-        if any(k not in opts for k in ("host", "username", "password", "port", "url")):
-            Pet.logger.info(
-                "Error - Failed to retrieve options. "
-                "Check that app is bound to a Cloudant service."
-            )
-            sys.exit(-1)
-
-        Pet.logger.info("Cloudant Endpoint: %s", opts["url"])
-        try:
-            if ADMIN_PARTY:
-                Pet.logger.info("Running in Admin Party Mode...")
-            Pet.client = Cloudant(
-                opts["username"],
-                opts["password"],
-                url=opts["url"],
-                connect=True,
-                auto_renew=True,
-                admin_party=ADMIN_PARTY,
-                adapter=Replay429Adapter(retries=10, initialBackoff=0.01),
-            )
-        except ConnectionError as error:
-            raise AssertionError("Cloudant service could not be reached") from error
-
-        # Create database if it doesn't exist
-        try:
-            Pet.database = Pet.client[dbname]   # pylint: disable=unsubscriptable-object
-        except KeyError:
-            # Create a database using an initialized client
-            Pet.database = Pet.client.create_database(dbname)
-        # check for success
-        if not Pet.database.exists():
-            raise AssertionError(f"Database [{dbname}] could not be obtained")
+        logger.info("Processing gender query for %s ...", gender.name)
+        return cls.query.filter(cls.gender == gender)
