@@ -26,7 +26,7 @@
 		"bbenoist.vagrant",
 		"streetsidesoftware.code-spell-checker"
 	],
-    "postCreateCommand": "sudo pip install -r requirements.txt; bash /app/scripts/install-tools.sh",
+    "postCreateCommand": "sudo pip install -r requirements.txt",
 	"features": {
 		"docker-in-docker": "latest",
 		"kubectl-helm-minikube": {

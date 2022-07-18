@@ -7,10 +7,6 @@ RUN apt-get update && \
     apt-get autoremove -y && \
     apt-get clean -y
 
-# Install K3D, Kustomize, & IBM Cloud CLI for Kubernetes
-RUN curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | bash && \
-    curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
-
 # Create a user for development
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -22,7 +18,6 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && usermod -aG sudo $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
-    && echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> /home/$USERNAME/.bashrc \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME
 
 # Added libraries for PostgreSQL before pip install
@@ -43,5 +38,5 @@ ENV TERM=xterm-256color
 USER $USERNAME
 
 # Install user mode tools
-RUN ibmcloud plugin install container-service -r 'IBM Cloud' && \
-    ibmcloud plugin install container-registry -r 'IBM Cloud'
+COPY .devcontainer/scripts/install-tools.sh /tmp/
+RUN cd /tmp; bash ./install-tools.sh

@@ -1,4 +1,0 @@
-alias ic='/usr/local/bin/ibmcloud'
-alias kc='/usr/local/bin/kubectl'
-alias ku='/usr/local/bin/kustomize'
-alias kns='kubectl config set-context --current --namespace'
