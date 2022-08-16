@@ -58,11 +58,16 @@ spec:
       targetPort: 5432
       nodePort: 31032
 
-# These can also be created from the command line using environment variables
-#
-# kubectl create secret generic postgres-creds --from-literal=password=$POSTGRES_PASSWORD
-#
 ---
+# This secret can also be created from the command line using environment variables
+#
+# export DATABASE_URI='postgresql://<place-url-to-database-here>'
+# export POSTGRES_PASSWORD='<place-password-here>'
+#
+# kubectl create secret generic postgres-creds \
+#     --from-literal=password=$POSTGRES_PASSWORD
+#     --from-literal=database_uri=$DATABASE_URI
+#
 apiVersion: v1
 kind: Secret
 metadata:
