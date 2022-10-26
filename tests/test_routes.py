@@ -52,6 +52,7 @@ BASE_URL = "/pets"
 ######################################################################
 #  T E S T   P E T   S E R V I C E
 ######################################################################
+# pylint: disable=too-many-public-methods
 class TestPetService(unittest.TestCase):
     """Pet Server Tests"""
 

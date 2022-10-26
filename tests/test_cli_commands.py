@@ -1,3 +1,6 @@
+"""
+Tests cases for Flask CLI extensions
+"""
 from unittest import TestCase
 from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
