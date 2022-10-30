@@ -6,6 +6,11 @@ metadata:
     app: lab-bluemix-cf
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0%
+      maxUnavailable: 50%
   selector:
     matchLabels:
       app: lab-bluemix-cf

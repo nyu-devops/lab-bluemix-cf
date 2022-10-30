@@ -9,6 +9,7 @@ Thumbs.db
 unittests.xml
 
 # database files
+*.db
 db/*
 !db/.keep
 
