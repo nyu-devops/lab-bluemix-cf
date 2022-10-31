@@ -1,3 +1,4 @@
+# cSpell: ignore testdb sqlalchemy
 ######################################################################
 # Copyright 2016, 2022 John Rofrano. All Rights Reserved.
 #
@@ -180,7 +181,7 @@ class TestPetService(unittest.TestCase):
         self.assertEqual(new_pet["gender"], test_pet.gender.name)
 
     # This just stopped working ???
-    # def test_create_pet_from_formdata(self):
+    # def test_create_pet_from_form_data(self):
     #     """It should Create a Pet from Form data"""
     #     pet_data = MultiDict()
     #     pet_data.add("name", "Timothy")

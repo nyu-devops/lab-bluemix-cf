@@ -1,3 +1,4 @@
+# cSpell: ignore vcap sqlalchemy
 """
 Global Configuration for Application
 """
