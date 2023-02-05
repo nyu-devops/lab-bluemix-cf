@@ -4,35 +4,45 @@
 	"service": "app",
 	"workspaceFolder": "/app",
 	"remoteUser": "vscode",
-	"extensions": [
-		"VisualStudioExptTeam.vscodeintellicode",
-		"ms-python.python",
-		"ms-python.pylint",
-		"ms-python.vscode-pylance",
-		"alexkrechik.cucumberautocomplete",
-		"yzhang.markdown-all-in-one",
-		"bierner.github-markdown-preview",
-		"hnw.vscode-auto-open-markdown-preview",
-		"DavidAnson.vscode-markdownlint",
-		"donjayamanne.githistory",
-		"GitHub.vscode-pull-request-github",
-		"hbenl.vscode-test-explorer",
-		"LittleFoxTeam.vscode-python-test-adapter",
-		"njpwerner.autodocstring",
-		"redhat.vscode-yaml",
-    	"wholroyd.jinja",
-		"ms-azuretools.vscode-docker",
-		"inercia.vscode-k3d",
-		"bbenoist.vagrant",
-		"streetsidesoftware.code-spell-checker"
-	],
+
+	// Configure tool-specific properties.
+	"customizations": {
+		"extensions": [
+			"VisualStudioExptTeam.vscodeintellicode",
+			"ms-python.python",
+			"ms-python.pylint",
+			"ms-python.vscode-pylance",
+			"alexkrechik.cucumberautocomplete",
+			"yzhang.markdown-all-in-one",
+			"bierner.github-markdown-preview",
+			"hnw.vscode-auto-open-markdown-preview",
+			"DavidAnson.vscode-markdownlint",
+			"donjayamanne.githistory",
+			"GitHub.vscode-pull-request-github",
+			"hbenl.vscode-test-explorer",
+			"LittleFoxTeam.vscode-python-test-adapter",
+			"njpwerner.autodocstring",
+			"redhat.vscode-yaml",
+			"wholroyd.jinja",
+			"ms-azuretools.vscode-docker",
+			"inercia.vscode-k3d",
+			"bbenoist.vagrant",
+			"streetsidesoftware.code-spell-checker"
+		]
+	},
+
+	// Use 'postCreateCommand' to run commands after the container is created.
     "postCreateCommand": "sudo pip install -r requirements.txt",
+
+	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
-		"docker-in-docker": "latest",
-		"kubectl-helm-minikube": {
-			"version": "latest",
-			"helm": "latest",
-			"minikube": "none"
-		}
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+		"ghcr.io/rio/features/skaffold:2": {}
 	}
+	
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// This can be used to network with other containers or the host.
+	// "forwardPorts": [5000, 5432],
+
 }
