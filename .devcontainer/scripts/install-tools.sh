@@ -8,6 +8,9 @@ echo "**********************************************************************"
 echo "Installing K3D Kubernetes..."
 echo "**********************************************************************"
 curl -s "https://raw.githubusercontent.com/rancher/k3d/main/install.sh" | sudo bash
+echo "Creating kc and kns alias for kubectl..."
+echo "alias kc='/usr/local/bin/kubectl'" >> $HOME/.bash_aliases
+echo "alias kns='kubectl config set-context --current --namespace'" >> $HOME/.bash_aliases
 
 echo "**********************************************************************"
 echo "Installing IBM Cloud CLI..."
@@ -17,12 +20,8 @@ echo "source /usr/local/ibmcloud/autocomplete/bash_autocomplete" >> $HOME/.bashr
 # Install user mode tools
 ibmcloud plugin install container-service -r 'IBM Cloud'
 ibmcloud plugin install container-registry -r 'IBM Cloud'
-
-echo "Creating aliases for new tools..."
+echo "Creating aliases for ibmcloud tools..."
 echo "alias ic='/usr/local/bin/ibmcloud'" >> $HOME/.bash_aliases
-echo "alias kc='/usr/local/bin/kubectl'" >> $HOME/.bash_aliases
-echo "alias ku='/usr/local/bin/kustomize'" >> $HOME/.bash_aliases
-echo "alias kns='kubectl config set-context --current --namespace'" >> $HOME/.bash_aliases
 
 # Platform specific installs
 if [ $(uname -m) == aarch64 ]; then
