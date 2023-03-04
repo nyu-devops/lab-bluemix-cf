@@ -7,32 +7,35 @@
 
 	// Configure tool-specific properties.
 	"customizations": {
-		"extensions": [
-			"VisualStudioExptTeam.vscodeintellicode",
-			"ms-python.python",
-			"ms-python.pylint",
-			"ms-python.vscode-pylance",
-			"alexkrechik.cucumberautocomplete",
-			"yzhang.markdown-all-in-one",
-			"bierner.github-markdown-preview",
-			"hnw.vscode-auto-open-markdown-preview",
-			"DavidAnson.vscode-markdownlint",
-			"donjayamanne.githistory",
-			"GitHub.vscode-pull-request-github",
-			"hbenl.vscode-test-explorer",
-			"LittleFoxTeam.vscode-python-test-adapter",
-			"njpwerner.autodocstring",
-			"redhat.vscode-yaml",
-			"wholroyd.jinja",
-			"ms-azuretools.vscode-docker",
-			"inercia.vscode-k3d",
-			"bbenoist.vagrant",
-			"streetsidesoftware.code-spell-checker"
-		]
+		"vscode": {
+			"extensions": [
+				"VisualStudioExptTeam.vscodeintellicode",
+				"ms-python.python",
+				"ms-python.pylint",
+				"ms-python.vscode-pylance",
+				"wholroyd.jinja",
+				"alexkrechik.cucumberautocomplete",
+				"yzhang.markdown-all-in-one",
+				"bierner.github-markdown-preview",
+				"hnw.vscode-auto-open-markdown-preview",
+				"DavidAnson.vscode-markdownlint",
+				"donjayamanne.githistory",
+				"GitHub.vscode-pull-request-github",
+				"hbenl.vscode-test-explorer",
+				"LittleFoxTeam.vscode-python-test-adapter",
+				"njpwerner.autodocstring",
+				"redhat.vscode-yaml",
+				"ms-azuretools.vscode-docker",
+				"inercia.vscode-k3d",
+				"bbenoist.vagrant",
+				"IBM.ibmcloud-account",
+				"streetsidesoftware.code-spell-checker"
+			]	
+		}
 	},
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-    "postCreateCommand": "sudo pip install -r requirements.txt",
+    // "postCreateCommand": "",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {

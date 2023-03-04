@@ -25,7 +25,7 @@ PUT /pets/{id} - updates a Pet record in the database
 DELETE /pets/{id} - deletes a Pet record in the database
 """
 
-from flask import jsonify, request, url_for, abort
+from flask import request, url_for, abort
 from service.models import Pet, Gender
 from service.utils import status  # HTTP Status Codes
 from . import app  # Import Flask application
@@ -37,7 +37,7 @@ from . import app  # Import Flask application
 @app.route("/health")
 def health():
     """Health Status"""
-    return jsonify(dict(status="OK")), status.HTTP_200_OK
+    return {"status": 'OK'}, status.HTTP_200_OK
 
 
 ######################################################################
@@ -83,7 +83,7 @@ def list_pets():
 
     results = [pet.serialize() for pet in pets]
     app.logger.info("Returning %d pets", len(results))
-    return jsonify(results), status.HTTP_200_OK
+    return results, status.HTTP_200_OK
 
 
 ######################################################################
@@ -102,7 +102,7 @@ def get_pets(pet_id):
         abort(status.HTTP_404_NOT_FOUND, f"Pet with id '{pet_id}' was not found.")
 
     app.logger.info("Returning pet: %s", pet.name)
-    return jsonify(pet.serialize()), status.HTTP_200_OK
+    return pet.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
@@ -153,7 +153,7 @@ def create_pets():
     location_url = url_for("get_pets", pet_id=pet.id, _external=True)
 
     app.logger.info("Pet with ID [%s] created.", pet.id)
-    return jsonify(pet.serialize()), status.HTTP_201_CREATED, {"Location": location_url}
+    return pet.serialize(), status.HTTP_201_CREATED, {"Location": location_url}
 
 
 ######################################################################
@@ -178,7 +178,7 @@ def update_pets(pet_id):
     pet.update()
 
     app.logger.info("Pet with ID [%s] updated.", pet.id)
-    return jsonify(pet.serialize()), status.HTTP_200_OK
+    return pet.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
@@ -217,7 +217,7 @@ def purchase_pets(pet_id):
 
     pet.available = False
     pet.update()
-    return jsonify(pet.serialize()), status.HTTP_200_OK
+    return pet.serialize(), status.HTTP_200_OK
 
 
 ######################################################################
