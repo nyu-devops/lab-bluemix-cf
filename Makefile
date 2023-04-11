@@ -7,6 +7,7 @@ IMAGE ?= $(REGISTRY)/$(NAMESPACE)/$(IMAGE_NAME):$(IMAGE_TAG)
 # PLATFORM ?= "linux/amd64,linux/arm64"
 PLATFORM ?= "linux/amd64"
 CLUSTER ?= nyu-devops
+SPACE ?= dev
 
 .PHONY: help
 help: ## Display this help.
@@ -51,6 +52,13 @@ run: ## Run the service
 	$(info Starting service...)
 	honcho start
 
+.PHONY: namespace
+namespace: ## Create the namespace assigned to the SPACE env variable
+	$(info Creatng the $(SPACE) namespace...)
+	kubectl create namespace $(SPACE) 
+	kubectl get secret all-icr-io -n default -o yaml | sed 's/default/$(SPACE)/g' | kubectl create -n $(SPACE) -f -
+	kubectl config set-context --current --namespace $(SPACE)
+
 ############################################################
 # COMMANDS FOR DEPLOYING THE IMAGE
 ############################################################
@@ -60,7 +68,7 @@ run: ## Run the service
 .PHONY: login
 login: ## Login to IBM Cloud using yur api key
 	$(info Logging into IBM Cloud cluster $(CLUSTER)...)
-	ibmcloud login -a cloud.ibm.com -g Default -r us-south --apikey @~/apikey.json
+	ibmcloud login -a cloud.ibm.com -g Default -r us-south --apikey @~/.bluemix/apikey.json
 	ibmcloud cr login
 	ibmcloud ks cluster config --cluster $(CLUSTER)
 	kubectl cluster-info
@@ -68,6 +76,7 @@ login: ## Login to IBM Cloud using yur api key
 .PHONY: push
 image-push: ## Push to a Docker image registry
 	$(info Logging into IBM Cloud cluster $(CLUSTER)...)
+	ibmcloud cr login
 	docker push $(IMAGE)
 
 .PHONY: deploy
