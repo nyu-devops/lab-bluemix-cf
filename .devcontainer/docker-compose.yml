@@ -11,7 +11,7 @@ services:
     container_name: lab-bluemix-cf
     volumes:
       - ..:/app
-      - ~/.bluemix/apikey.json:/home/vscode/apikey.json
+      - ~/.bluemix/apikey.json:/home/vscode/.bluemix/apikey.json
     command: sleep infinity
     environment:
       FLASK_APP: service:app
