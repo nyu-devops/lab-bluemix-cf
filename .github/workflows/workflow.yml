@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: python:3.11-slim
+    container: python:3.9-slim
 
     # Required services    
     services:
