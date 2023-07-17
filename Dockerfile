@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Added libraries for PostgreSQL before pip install
 RUN apt-get update && apt-get install -y gcc libpq-dev
@@ -13,8 +13,8 @@ RUN pip install -U pip wheel && \
 COPY service/ ./service/
 
 # Switch to a non-root user
-RUN useradd --uid 1000 vagrant && chown -R vagrant /app
-USER vagrant
+RUN useradd --uid 1001 flask && chown -R flask /app
+USER flask
 
 # Expose any ports the app is expecting in the environment
 ENV FLASK_APP=service:app

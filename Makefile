@@ -45,7 +45,7 @@ lint: ## Run the linter
 .PHONY: test
 test: ## Run the unit tests
 	$(info Running tests...)
-	nosetests --with-spec --spec-color
+	green -vvv --processes=1 --run-coverage --termcolor --minimum-coverage=95
 
 .PHONY: run
 run: ## Run the service

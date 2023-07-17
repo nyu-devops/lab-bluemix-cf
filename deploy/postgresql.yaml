@@ -31,13 +31,13 @@ spec:
           volumeMounts:
           - name: postgres-storage
             mountPath: /var/lib/postgresql/data
-          # resources:
-          #   limits:
-          #     cpu: "0.20"
-          #     memory: "64Mi"
-          #   requests:
-          #     cpu: "0.10"        
-          #     memory: "32Mi"
+          resources:
+            limits:
+              cpu: "0.50"
+              memory: "256Mi"
+            requests:
+              cpu: "0.25"        
+              memory: "128Mi"
       volumes:
       - name: postgres-storage
         emptyDir: {}

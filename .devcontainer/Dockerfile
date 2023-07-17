@@ -1,5 +1,5 @@
 # Image for a Python 3 development environment
-FROM rofrano/nyu-devops-base:sp23
+FROM rofrano/nyu-devops-base:su23
 
 # Set up the Python development environment
 WORKDIR /app
