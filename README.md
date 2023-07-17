@@ -54,12 +54,12 @@ If it does not automatically pronot you to open the project in a container, you 
 
 ## Run the tests
 
-Before you modify any code you should always run teh test suit to be sure that nothing is broken bedfore you start.
+Before you modify any code you should always run the test suite to be sure that nothing is broken before you start.
 
 You can run the tests to make sure that the code works with the following command:
 
 ```bash
-nosetests
+green
 ```
 
 ### Run the Service
@@ -84,14 +84,16 @@ You should be able to see it at: http://localhost:8080/
 
 When you are done, you can use `Ctrl+C` to stop the server and then exit and shut down the vm with:
 
-## Deploy to IBM Cloud manually
+## Deploy to Cloud Foundry manually
 
-Before you can deploy this application to IBM Cloud you MUST edit the `manifest.yml` file and change the name of the application to something unique. I recommend changing the last two letters to your initials as a start. If that doesn't work, start adding numbers to make it unique.
+_Note: IBM Cloud no longer supports Cloud Foundry_ :(
+
+Before you can deploy this application to Cloud Foundry you MUST edit the `manifest.yml` file and change the name of the application to something unique. I recommend changing the last two letters to your initials as a start. If that doesn't work, start adding numbers to make it unique.
 
 Then from a terminal login into IBM Cloud and set the api endpoint to the IBM Cloud region you wish to deploy to:
 
 ```bash
-ic cf login -a https://cloud.ibm.com
+ibmcloud cf login -a https://cloud.ibm.com
 ```
 
 The login will ask you for you `email`(username) and `password`, plus the `organization` and `space` if there is more than one to choose from.
@@ -99,19 +101,19 @@ The login will ask you for you `email`(username) and `password`, plus the `organ
 From the root directory of the application code execute the following to deploy the application to IBM Cloud. (By default the `route` (application URL) will be based on your application name so make sure your application name is unique or use the -n option on the cf push command to define your hostname)
 
 ```bash
-ic cf push <YOUR_APP_NAME> -m 64M
+ibmcloud cf push <YOUR_APP_NAME> -m 64M
 ```
 
 to deploy when you don't have a `requirements.txt` or `setup.py` then use:
 
 ```bash
-ic cf push <YOUR_APP_NAME> -m 64M -b https://github.com/cloudfoundry/python-buildpack
+ibmcloud cf push <YOUR_APP_NAME> -m 64M -b https://github.com/cloudfoundry/python-buildpack
 ```
 
 to deploy with a different hostname to the app name:
 
 ```bash
-ic cf push <YOUR_APP_NAME> -m 64M -n <YOUR_HOST_NAME>
+ibmcloud cf push <YOUR_APP_NAME> -m 64M -n <YOUR_HOST_NAME>
 ```
 
 ## View App
