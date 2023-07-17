@@ -14,7 +14,7 @@
 				"ms-python.pylint",
 				"ms-python.vscode-pylance",
 				"wholroyd.jinja",
-				"alexkrechik.cucumberautocomplete",
+				"ms-python.black-formatter",
 				"yzhang.markdown-all-in-one",
 				"bierner.github-markdown-preview",
 				"hnw.vscode-auto-open-markdown-preview",
@@ -24,13 +24,15 @@
 				"hbenl.vscode-test-explorer",
 				"LittleFoxTeam.vscode-python-test-adapter",
 				"njpwerner.autodocstring",
+				"github.vscode-github-actions",
+				"rangav.vscode-thunder-client",
 				"redhat.vscode-yaml",
 				"ms-azuretools.vscode-docker",
 				"inercia.vscode-k3d",
 				"bbenoist.vagrant",
 				"IBM.ibmcloud-account",
 				"streetsidesoftware.code-spell-checker"
-			]	
+			]
 		}
 	},
 
@@ -40,8 +42,7 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
-		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
-		"ghcr.io/rio/features/skaffold:2": {}
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {}
 	}
 	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
