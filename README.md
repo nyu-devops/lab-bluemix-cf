@@ -1,7 +1,6 @@
 # IBM Cloud Python Web application
 
 [![Build Status](https://github.com/nyu-devops/lab-bluemix-cf/actions/workflows/workflow.yml/badge.svg)](https://github.com/nyu-devops/lab-bluemix-cf/actions)
-
 [![codecov](https://codecov.io/gh/nyu-devops/lab-bluemix-cf/branch/master/graph/badge.svg?token=dCToV9ysTt)](https://codecov.io/gh/nyu-devops/lab-bluemix-cf)
 
 This repository is part of lab for the *NYU DevOps* class, [CSCI-GA.2820-​001 ](http://cs.nyu.edu/courses/spring17/CSCI-GA.3033-013/)
