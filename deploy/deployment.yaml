@@ -9,8 +9,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 0%
-      maxUnavailable: 50%
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: lab-bluemix-cf
@@ -43,8 +43,8 @@ spec:
             port: 8080
         resources:
           limits:
-            cpu: "0.20"
-            memory: "64Mi"
+            cpu: "0.50"
+            memory: "128Mi"
           requests:
-            cpu: "0.10"        
-            memory: "32Mi"
+            cpu: "0.25"        
+            memory: "64Mi"
