@@ -15,7 +15,7 @@ honcho==1.1.0
 # Code quality
 pylint==2.16.2
 flake8==6.0.0
-black==23.1.0
+black==26.10.1
 
 # Testing dependencies
 green==3.4.3
